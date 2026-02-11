@@ -202,6 +202,10 @@
         let designItems = [];
         let editingSessionIndex = null;
 
+        // Make these globally accessible
+        window.designItems = designItems;
+        window.editingSessionIndex = editingSessionIndex;
+
         function onDesignTypeChange() {
             const type = document.getElementById('designType').value;
             const exerciseGroup = document.getElementById('exerciseGroup');
@@ -227,7 +231,7 @@
             if (!type) { alert('Please select a type'); return; }
             if (!exercise) { alert('Please enter the exercise/drill name'); return; }
             if (!minutes || minutes <= 0) { alert('Please enter a valid time in minutes'); return; }
-            designItems.push({type, exercise, minutes});
+            window.designItems.push({type, exercise, minutes});
             renderDesignItems();
             document.getElementById('morePrompt').style.display = 'block';
         }
@@ -235,17 +239,17 @@
         function renderDesignItems() {
             const list = document.getElementById('designItemsList');
             if (!list) return;
-            if (designItems.length === 0) {
+            if (window.designItems.length === 0) {
                 list.innerHTML = '<li style="color:#666">No items yet</li>';
                 return;
             }
-            list.innerHTML = designItems.map((it,i) => `\n                <li style="margin-bottom:0.5rem;">\n                  <strong>${it.type}</strong> — ${it.exercise} — ${it.minutes} min\n                  <button style="margin-left:0.75rem;" onclick="removeDesignItem(${i})">Remove</button>\n                </li>`).join('');
+            list.innerHTML = window.designItems.map((it,i) => `\n                <li style="margin-bottom:0.5rem;">\n                  <strong>${it.type}</strong> — ${it.exercise} — ${it.minutes} min\n                  <button style="margin-left:0.75rem;" onclick="removeDesignItem(${i})">Remove</button>\n                </li>`).join('');
         }
 
         function removeDesignItem(index) {
-            designItems.splice(index,1);
+            window.designItems.splice(index,1);
             renderDesignItems();
-            if (designItems.length === 0) document.getElementById('morePrompt').style.display = 'none';
+            if (window.designItems.length === 0) document.getElementById('morePrompt').style.display = 'none';
         }
 
         function addAnother() {
@@ -336,30 +340,30 @@ window.deleteDoc = deleteDoc;
 window.firebaseFinalizeDesignSession = async function() {
     const date = document.getElementById('designDate').value;
     if (!date) { alert('Please select a date for the session'); return; }
-    if (designItems.length === 0) { alert('Please add at least one type/exercise'); return; }
+    if (window.designItems.length === 0) { alert('Please add at least one type/exercise'); return; }
     
     try {
         const sessionData = {
             date,
-            items: designItems.slice(),
+            items: window.designItems.slice(),
             created: Date.now()
         };
         
-        if (editingSessionIndex !== null) {
+        if (window.editingSessionIndex !== null) {
             // Update existing document
-            await updateDoc(doc(db, 'sessions', editingSessionIndex), sessionData);
+            await updateDoc(doc(db, 'sessions', window.editingSessionIndex), sessionData);
         } else {
             // Create new document
             await addDoc(collection(db, 'sessions'), sessionData);
         }
         
-        designItems = [];
+        window.designItems = [];
         renderDesignItems();
         document.getElementById('designForm').reset();
         document.getElementById('morePrompt').style.display = 'none';
         await window.firebaseRenderSessionsList();
         const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'sessions');
-        editingSessionIndex = null;
+        window.editingSessionIndex = null;
         switchTab('sessions', btn || null);
     } catch (error) {
         alert('Error saving session: ' + error.message);
@@ -413,8 +417,8 @@ window.firebaseEditSession = async function(docId) {
         
         const s = docSnap.data();
         document.getElementById('designDate').value = s.date;
-        designItems = s.items.slice();
-        editingSessionIndex = docId;
+        window.designItems = s.items.slice();
+        window.editingSessionIndex = docId;
         renderDesignItems();
         const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'design');
         switchTab('design', btn || null);
