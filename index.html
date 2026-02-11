@@ -340,12 +340,12 @@ window.deleteDoc = deleteDoc;
 window.firebaseFinalizeDesignSession = async function() {
     const date = document.getElementById('designDate').value;
     if (!date) { alert('Please select a date for the session'); return; }
-    if (window.designItems.length === 0) { alert('Please add at least one type/exercise'); return; }
+    if (!window.designItems || window.designItems.length === 0) { alert('Please add at least one type/exercise'); return; }
     
     try {
         const sessionData = {
             date,
-            items: window.designItems.slice(),
+            items: (window.designItems || []).slice(),
             created: Date.now()
         };
         
@@ -388,7 +388,7 @@ window.firebaseRenderSessionsList = async function() {
         const s = docSnap.data();
         const id = docSnap.id;
 
-        const items = s.items
+        const items = (s.items || [])
             .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
             .join('');
 
