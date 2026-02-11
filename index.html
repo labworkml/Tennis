@@ -255,65 +255,106 @@
             document.getElementById('designExercise').focus();
         }
 
-        function finalizeDesignSession() {
+        async function finalizeDesignSession() {
             const date = document.getElementById('designDate').value;
             if (!date) { alert('Please select a date for the session'); return; }
             if (designItems.length === 0) { alert('Please add at least one type/exercise'); return; }
-            const sessions = JSON.parse(localStorage.getItem('planned_sessions') || '[]');
-            if (editingSessionIndex !== null && sessions[editingSessionIndex]) {
-                // replace existing session
-                sessions[editingSessionIndex] = Object.assign({}, sessions[editingSessionIndex], { date, items: designItems.slice() });
-            } else {
-                sessions.push({date, items: designItems.slice(), created: Date.now()});
+            
+            try {
+                const sessionData = {
+                    date,
+                    items: designItems.slice(),
+                    created: Date.now()
+                };
+                
+                if (editingSessionIndex !== null) {
+                    // Update existing document
+                    await updateDoc(doc(db, 'sessions', editingSessionIndex), sessionData);
+                } else {
+                    // Create new document
+                    await addDoc(collection(db, 'sessions'), sessionData);
+                }
+                
+                designItems = [];
+                renderDesignItems();
+                document.getElementById('designForm').reset();
+                document.getElementById('morePrompt').style.display = 'none';
+                await renderSessionsList();
+                const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'sessions');
+                editingSessionIndex = null;
+                switchTab('sessions', btn || null);
+            } catch (error) {
+                alert('Error saving session: ' + error.message);
+                console.error(error);
             }
-            localStorage.setItem('planned_sessions', JSON.stringify(sessions));
-            designItems = [];
-            renderDesignItems();
-            document.getElementById('designForm').reset();
-            document.getElementById('morePrompt').style.display = 'none';
-            renderSessionsList();
-            const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'sessions');
-            // clear editing state
-            editingSessionIndex = null;
-            switchTab('sessions', btn || null);
         }
 
-        function renderSessionsList() {
+        async function renderSessionsList() {
             const listEl = document.getElementById('sessionsList');
             if (!listEl) return;
-            const sessions = JSON.parse(localStorage.getItem('planned_sessions') || '[]');
-            if (sessions.length === 0) {
-                listEl.innerHTML = '<li>No sessions planned yet. <a href="#" onclick="switchTab(\'design\', document.querySelector(\'.tab-button[data-tab=\\\"design\\\"]\'))">Design one now</a></li>';
+
+            const snapshot = await getDocs(collection(db, "sessions"));
+
+            if (snapshot.empty) {
+                listEl.innerHTML = '<li>No sessions planned yet.</li>';
                 return;
             }
-            listEl.innerHTML = sessions.map((s, idx) => {
-                const items = s.items.map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`).join('');
-                return `\n                    <li>\n                      <div style="display:flex;justify-content:space-between;align-items:center">\n                        <strong>${s.date}</strong>\n                        <div>\n                          <button onclick="editSession(${idx})" style="margin-right:.5rem" class="submit-btn">Edit</button>\n                          <button onclick="deleteSession(${idx})" style="background:#ef4444;border:none;padding:.55rem .8rem;border-radius:8px;color:#fff;cursor:pointer">Delete</button>\n                        </div>\n                      </div>\n                      <div style="margin-top:0.5rem;">${items}</div>\n                    </li>`;
-            }).join('');
+
+            let html = "";
+
+            snapshot.forEach(docSnap => {
+                const s = docSnap.data();
+                const id = docSnap.id;
+
+                const items = s.items
+                    .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
+                    .join('');
+
+                html += `
+            <li>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>${s.date}</strong>
+                <div>
+                  <button onclick="editSession('${id}')" class="submit-btn">Edit</button>
+                  <button onclick="deleteSession('${id}')" style="background:#ef4444;border:none;padding:.55rem .8rem;border-radius:8px;color:#fff;cursor:pointer">Delete</button>
+                </div>
+              </div>
+              <div style="margin-top:0.5rem;">${items}</div>
+            </li>
+        `;
+            });
+
+            listEl.innerHTML = html;
         }
 
-        function editSession(index) {
-            const sessions = JSON.parse(localStorage.getItem('planned_sessions') || '[]');
-            const s = sessions[index];
-            if (!s) return alert('Session not found');
-            // load session into design form
-            document.getElementById('designDate').value = s.date;
-            designItems = s.items.slice();
-            editingSessionIndex = index;
-            renderDesignItems();
-            // switch to design tab
-            // attempt to find the nav Sessions button to deactivate
-            const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'design');
-            switchTab('design', btn || null);
+        async function editSession(docId) {
+            try {
+                const docRef = doc(db, 'sessions', docId);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) return alert('Session not found');
+                
+                const s = docSnap.data();
+                document.getElementById('designDate').value = s.date;
+                designItems = s.items.slice();
+                editingSessionIndex = docId;
+                renderDesignItems();
+                const btn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === 'design');
+                switchTab('design', btn || null);
+            } catch (error) {
+                alert('Error loading session: ' + error.message);
+                console.error(error);
+            }
         }
 
-        function deleteSession(index) {
+        async function deleteSession(docId) {
             if (!confirm('Delete this planned session?')) return;
-            const sessions = JSON.parse(localStorage.getItem('planned_sessions') || '[]');
-            if (!sessions[index]) return;
-            sessions.splice(index,1);
-            localStorage.setItem('planned_sessions', JSON.stringify(sessions));
-            renderSessionsList();
+            try {
+                await deleteDoc(doc(db, 'sessions', docId));
+                await renderSessionsList();
+            } catch (error) {
+                alert('Error deleting session: ' + error.message);
+                console.error(error);
+            }
         }
 
         function planSession() {
@@ -332,14 +373,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            renderSessionsList();
-            renderDesignItems();
-        });
+    setTimeout(() => {
+        renderSessionsList();
+    }, 500);
+    renderDesignItems();
+});
+
     </script>
 <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -357,10 +401,11 @@
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-    // Firestore imports
 
-// Initialize Firestore
-const db = getFirestore(app);
+  // Initialize Firestore
+  const db = getFirestore(app);
+window.db = db;
+
 
 // TEST FUNCTIONS
 window.saveSession = async function(session){
