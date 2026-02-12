@@ -94,19 +94,86 @@
             #designItemsList li{flex-direction:column;align-items:flex-start}
             .session-list li{padding:.85rem}
         }
+
+        /* Session Modal Styles */
+        #sessionModal[style*="display: none"] {
+            display: none !important;
+        }
+
+        #modalItemsList li {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #fbfdff, #ffffff);
+            border: 1px solid #eef4f8;
+            margin-bottom: 0.8rem;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        #modalItemsList li input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        #modalItemsList li.checked {
+            background: rgba(26, 188, 156, 0.15);
+            opacity: 0.65;
+            border-color: rgba(26, 188, 156, 0.3);
+        }
+
+        #modalItemsList li .item-text {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #12223a;
+        }
+
+        #finishSessionBtn:hover {
+            transform: translateY(-2px);
+            background: var(--accent-600);
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
+    <!-- Login Page -->
+    <div id="loginPage" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(180deg,#f7fbfd 0%,var(--bg) 100%);padding:1rem;">
+        <div style="background:var(--card);padding:2rem;border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,0.09);max-width:400px;width:100%;">
+            <h1 style="text-align:center;color:#0f2540;margin-bottom:2rem;">Tennis Training App</h1>
+            
+            <!-- Sign In Form -->
+            <div id="signInForm">
+                <h2 style="font-size:1.3rem;color:#0f2540;margin-bottom:1.5rem;">Sign In</h2>
+                <div class="form-group">
+                    <label for="signInEmail">Username:</label>
+                    <input type="text" id="signInEmail" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="signInPassword">Password:</label>
+                    <input type="password" id="signInPassword" placeholder="Enter your password">
+                </div>
+                <button class="submit-btn" style="width:100%;" onclick="handleSignIn()">Sign In</button>
+                <p style="text-align:center;color:var(--muted);font-size:0.9rem;margin-top:1rem;">
+                    Enter username and password to sign in. <br>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar" id="navbar" style="display:none;">
         <div class="nav-tabs">
             <button class="tab-button active" data-tab="home" onclick="switchTab('home', this)">Home</button>
             <button class="tab-button" data-tab="sessions" onclick="switchTab('sessions', this)">Sessions</button>
             <button class="tab-button" data-tab="match" onclick="switchTab('match', this)">Match</button>
             <button class="tab-button" data-tab="history" onclick="switchTab('history', this)">History</button>
+            <span id="currentUserDisplay" style="margin-left:auto;padding:0.5rem 1rem;color:var(--text);font-size:0.9rem;align-self:center;"></span>
+            <button class="submit-btn" style="background:#ef4444;padding:0.5rem 1rem;font-size:0.9rem;" onclick="handleLogout()">Logout</button>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container" id="mainContainer" style="display:none;">
         <!-- Home Tab -->
         <div id="home" class="tab-content active">
             <h1>Welcome to My Tennis Training</h1>
@@ -166,13 +233,77 @@
         <!-- Match Tab -->
         <div id="match" class="tab-content">
             <h1>Match Records</h1>
-            <p>Track your match performance here.</p>
+            <form id="matchForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="matchDate">Date:</label>
+                    <input type="date" id="matchDate">
+                </div>
+                <div class="form-group">
+                    <label for="opponentName">Opponent Name:</label>
+                    <input type="text" id="opponentName" placeholder="Enter opponent's name">
+                </div>
+                <div class="form-group">
+                    <label for="matchScore">Score (e.g., 6-4, 3-6, 7-5):</label>
+                    <input type="text" id="matchScore" placeholder="Enter your score">
+                </div>
+                <div class="form-group">
+                    <label for="matchResult">Result:</label>
+                    <select id="matchResult">
+                        <option value="">Select result...</option>
+                        <option value="Win">Win</option>
+                        <option value="Loss">Loss</option>
+                        <option value="Draw">Draw</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="submit-btn" onclick="saveMatchRecord()">Save Match Record</button>
+                </div>
+            </form>
         </div>
 
         <!-- History Tab -->
         <div id="history" class="tab-content">
             <h1>Training History</h1>
-            <p>View your past training sessions.</p>
+            
+            <!-- Training Sessions Section -->
+            <div style="margin-bottom:2rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <h3 style="color:#0f2540;margin:0;">Training Sessions</h3>
+                    <button class="submit-btn" style="background:#ef4444;padding:0.5rem 1rem;font-size:0.9rem;" onclick="clearTrainingHistory()">Clear History</button>
+                </div>
+                <ul class="session-list" id="historyList"></ul>
+            </div>
+            
+            <!-- Match Records Section -->
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <h3 style="color:#0f2540;margin:0;">Match Records</h3>
+                    <button class="submit-btn" style="background:#ef4444;padding:0.5rem 1rem;font-size:0.9rem;" onclick="clearMatchHistory()">Clear History</button>
+                </div>
+                <ul class="session-list" id="matchHistoryList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Execution Modal Overlay -->
+    <div id="sessionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
+        <div style="background:var(--card);margin:0 auto;max-width:600px;min-height:100vh;position:relative;padding:2rem 1.5rem;">
+            <!-- Back Button -->
+            <button id="modalBackBtn" style="background:transparent;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:1rem;padding:0.5rem 0;margin-bottom:1.5rem;" onclick="closeSessionModal()">← Back</button>
+            
+            <!-- Session Header -->
+            <div id="modalSessionHeader" style="margin-bottom:2rem;">
+                <p id="modalSessionDate" style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;"></p>
+                <h2 id="modalSessionTitle" style="font-size:1.4rem;color:#0f2540;margin:0;"></h2>
+            </div>
+            
+            <!-- Items Checklist -->
+            <ul id="modalItemsList" style="list-style:none;padding:0;margin:0 0 2rem 0;"></ul>
+            
+            <!-- Finish Session Button -->
+            <button id="finishSessionBtn" style="width:100%;background:var(--accent);color:white;padding:1rem;border-radius:10px;border:none;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 8px 20px rgba(26,188,156,0.12);transition:transform .12s ease,box-shadow .12s ease;margin-top:1rem;" onclick="finishSession()">
+                Finish Session
+            </button>
         </div>
     </div>
 
@@ -201,10 +332,12 @@
 
         let designItems = [];
         let editingSessionIndex = null;
+        let sessionDataMap = {}; // Map to store session data by ID
 
         // Make these globally accessible
         window.designItems = designItems;
         window.editingSessionIndex = editingSessionIndex;
+        window.sessionDataMap = sessionDataMap;
 
         function onDesignTypeChange() {
             const type = document.getElementById('designType').value;
@@ -294,18 +427,158 @@
             document.querySelector('form').reset();
         }
 
+        // Session Modal Functions
+        let currentSessionData = null;
+        let currentSessionId = null; // Store the session ID for deletion
+        let sessionCheckedItems = {};
+
+        function startSessionById(sessionId) {
+            const sessionData = window.sessionDataMap[sessionId];
+            if (!sessionData) {
+                alert('Session data not found');
+                return;
+            }
+            currentSessionId = sessionId; // Store the ID
+            openSessionModal(sessionData);
+        }
+
+        function openSessionModal(sessionData) {
+            currentSessionData = sessionData;
+            sessionCheckedItems = {};
+
+            // Populate header
+            document.getElementById('modalSessionDate').textContent = sessionData.date;
+            document.getElementById('modalSessionTitle').textContent = 'Session Checklist';
+
+            // Render items
+            const list = document.getElementById('modalItemsList');
+            list.innerHTML = sessionData.items.map((item, idx) => `
+                <li id="item-${idx}">
+                    <input type="checkbox" onchange="toggleItemCheck(${idx})">
+                    <span class="item-text">${item.type} — ${item.exercise} — ${item.minutes} min</span>
+                </li>
+            `).join('');
+
+            // Show modal
+            document.getElementById('sessionModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSessionModal() {
+            document.getElementById('sessionModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            currentSessionData = null;
+            currentSessionId = null; // Clear the ID
+            sessionCheckedItems = {};
+        }
+
+        function toggleItemCheck(index) {
+            const checkbox = document.querySelector(`#item-${index} input[type="checkbox"]`);
+            const item = document.getElementById(`item-${index}`);
+
+            if (checkbox.checked) {
+                sessionCheckedItems[index] = true;
+                item.classList.add('checked');
+            } else {
+                delete sessionCheckedItems[index];
+                item.classList.remove('checked');
+            }
+        }
+
+        function finishSession() {
+            if (!currentSessionData) {
+                alert('No session data loaded');
+                return;
+            }
+            const totalItems = currentSessionData.items.length;
+            const checkedCount = Object.keys(sessionCheckedItems).length;
+
+            if (checkedCount < totalItems) {
+                // Show confirm dialog
+                const confirmText = `You have ${totalItems - checkedCount} unfinished item(s). Finish anyway?`;
+                if (!confirm(confirmText)) {
+                    return;
+                }
+            }
+
+            // Save to history collection
+            window.firebaseSaveSessionToHistory(currentSessionData, checkedCount, totalItems, currentSessionId);
+        }
+
+        function saveMatchRecord() {
+            const date = document.getElementById('matchDate').value;
+            const opponent = document.getElementById('opponentName').value.trim();
+            const score = document.getElementById('matchScore').value.trim();
+            const result = document.getElementById('matchResult').value;
+
+            if (!date) { alert('Please select a match date'); return; }
+            if (!opponent) { alert('Please enter opponent name'); return; }
+            if (!score) { alert('Please enter the score'); return; }
+            if (!result) { alert('Please select the match result'); return; }
+
+            window.firebaseSaveMatchRecord({
+                date,
+                opponent,
+                score,
+                result
+            });
+        }
+
+        function clearTrainingHistory() {
+            if (!confirm('Are you sure you want to clear all training session history? This action cannot be undone.')) {
+                return;
+            }
+            window.firebaseClearTrainingHistory();
+        }
+
+        function clearMatchHistory() {
+            if (!confirm('Are you sure you want to clear all match records? This action cannot be undone.')) {
+                return;
+            }
+            window.firebaseClearMatchHistory();
+        }
+
+        // Authentication Functions
+        let currentUserId = null;
+        let currentUsername = null;
+
+        // Predefined users with passwords
+        const demoUsers = {
+            'user1': { password: 'password1', userId: 'user1', username: 'User 1' },
+            'user2': { password: 'password2', userId: 'user2', username: 'User 2' },
+            'user3': { password: 'password3', userId: 'user3', username: 'User 3' }
+        };
+
+        function handleSignIn() {
+            const username = document.getElementById('signInEmail').value.trim();
+            const password = document.getElementById('signInPassword').value.trim();
+
+            if (!username) { alert('Please enter username'); return; }
+            if (!password) { alert('Please enter password'); return; }
+
+            // Check credentials
+            if (demoUsers[username] && demoUsers[username].password === password) {
+                window.firebaseSignIn(username, password);
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+
+        function handleLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+            window.firebaseLogout();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        renderSessionsList();
-    }, 500);
-    renderDesignItems();
-});
+            window.checkAuthState();
+        });
 
     </script>
 <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -326,6 +599,7 @@
 
   // Initialize Firestore
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
 window.db = db;
 window.addDoc = addDoc;
@@ -335,6 +609,92 @@ window.doc = doc;
 window.getDoc = getDoc;
 window.updateDoc = updateDoc;
 window.deleteDoc = deleteDoc;
+window.query = query;
+window.where = where;
+window.setDoc = setDoc;
+
+// Authentication Functions
+window.checkAuthState = function() {
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+        currentUserId = storedUser;
+        const userObj = demoUsers[storedUser];
+        currentUsername = userObj ? userObj.username : storedUser;
+        document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
+        
+        // Hide login, show app
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('navbar').style.display = 'block';
+        document.getElementById('mainContainer').style.display = 'block';
+        
+        // Load user data
+        setTimeout(() => {
+            renderSessionsList();
+            window.firebaseRenderHistoryList();
+            window.firebaseRenderMatchHistory();
+        }, 500);
+        renderDesignItems();
+    } else {
+        // Show login, hide app
+        currentUserId = null;
+        currentUsername = null;
+        document.getElementById('currentUserDisplay').textContent = '';
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('navbar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+    }
+};
+
+window.firebaseSignIn = async function(username, password) {
+    try {
+        currentUserId = username;
+        const userObj = demoUsers[username];
+        currentUsername = userObj ? userObj.username : username;
+        
+        localStorage.setItem('currentUser', username);
+        document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
+        
+        // Hide login, show app
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('navbar').style.display = 'block';
+        document.getElementById('mainContainer').style.display = 'block';
+        
+        alert(`Welcome, ${currentUsername}!`);
+        document.getElementById('signInEmail').value = '';
+        document.getElementById('signInPassword').value = '';
+        
+        // Load user data
+        setTimeout(() => {
+            renderSessionsList();
+            window.firebaseRenderHistoryList();
+            window.firebaseRenderMatchHistory();
+        }, 500);
+    } catch (error) {
+        alert('Sign in failed: ' + error.message);
+        console.error(error);
+    }
+};
+
+window.firebaseLogout = async function() {
+    try {
+        localStorage.removeItem('currentUser');
+        currentUserId = null;
+        currentUsername = null;
+        document.getElementById('currentUserDisplay').textContent = '';
+        
+        // Show login, hide app
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('navbar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        
+        alert('Logged out successfully');
+    } catch (error) {
+        alert('Logout failed: ' + error.message);
+        console.error(error);
+    }
+};
+window.query = query;
+window.where = where;
 
 // Firebase-dependent functions
 window.firebaseFinalizeDesignSession = async function() {
@@ -346,11 +706,17 @@ window.firebaseFinalizeDesignSession = async function() {
         const sessionData = {
             date,
             items: (window.designItems || []).slice(),
-            created: Date.now()
+            created: Date.now(),
+            userId: currentUserId
         };
         
         if (window.editingSessionIndex !== null) {
-            // Update existing document
+            // Update existing document - validate userId first
+            const existingDoc = await getDoc(doc(db, 'sessions', window.editingSessionIndex));
+            if (existingDoc.exists() && existingDoc.data().userId !== currentUserId) {
+                alert('You do not have permission to edit this session!');
+                return;
+            }
             await updateDoc(doc(db, 'sessions', window.editingSessionIndex), sessionData);
         } else {
             // Create new document
@@ -375,7 +741,8 @@ window.firebaseRenderSessionsList = async function() {
     const listEl = document.getElementById('sessionsList');
     if (!listEl) return;
 
-    const snapshot = await getDocs(collection(db, "sessions"));
+    const q = query(collection(db, "sessions"), where("userId", "==", currentUserId));
+    const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
         listEl.innerHTML = '<li>No sessions planned yet.</li>';
@@ -392,11 +759,15 @@ window.firebaseRenderSessionsList = async function() {
             .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
             .join('');
 
+        // Store session data in map using document ID
+        window.sessionDataMap[id] = {date: s.date, items: s.items};
+
         html += `
     <li>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>${s.date}</strong>
         <div>
+          <button onclick="window.startSessionById('${id}')" class="submit-btn" style="background:var(--accent);">Start Session</button>
           <button onclick="editSession('${id}')" class="submit-btn">Edit</button>
           <button onclick="deleteSession('${id}')" style="background:#ef4444;border:none;padding:.55rem .8rem;border-radius:8px;color:#fff;cursor:pointer">Delete</button>
         </div>
@@ -416,6 +787,13 @@ window.firebaseEditSession = async function(docId) {
         if (!docSnap.exists()) return alert('Session not found');
         
         const s = docSnap.data();
+        
+        // Validate userId - prevent users from editing others' sessions
+        if (s.userId !== currentUserId) {
+            alert('You do not have permission to edit this session!');
+            return;
+        }
+        
         document.getElementById('designDate').value = s.date;
         window.designItems = s.items.slice();
         window.editingSessionIndex = docId;
@@ -429,8 +807,25 @@ window.firebaseEditSession = async function(docId) {
 };
 
 window.firebaseDeleteSession = async function(docId) {
-    if (!confirm('Delete this planned session?')) return;
     try {
+        const docRef = doc(db, 'sessions', docId);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+            alert('Session not found!');
+            return;
+        }
+        
+        const s = docSnap.data();
+        
+        // Validate userId - prevent users from deleting others' sessions
+        if (s.userId !== currentUserId) {
+            alert('You do not have permission to delete this session!');
+            return;
+        }
+        
+        if (!confirm('Delete this planned session?')) return;
+        
         await deleteDoc(doc(db, 'sessions', docId));
         await window.firebaseRenderSessionsList();
     } catch (error) {
@@ -439,6 +834,171 @@ window.firebaseDeleteSession = async function(docId) {
     }
 };
 
+window.firebaseSaveSessionToHistory = async function(sessionData, completedCount, totalItems, sessionId) {
+    try {
+        const historyData = {
+            date: sessionData.date,
+            items: sessionData.items,
+            completedItemsCount: completedCount,
+            totalItems: totalItems,
+            finishedAtTimestamp: Date.now(),
+            userId: currentUserId
+        };
+
+        await addDoc(collection(db, 'history'), historyData);
+
+        // Delete the session from sessions collection using the stored ID
+        if (sessionId) {
+            await deleteDoc(doc(db, 'sessions', sessionId));
+        }
+
+        alert('Session saved to history!');
+        closeSessionModal();
+        await window.firebaseRenderSessionsList(); // Refresh sessions list
+        await window.firebaseRenderHistoryList(); // Refresh history list
+    } catch (error) {
+        alert('Error saving session: ' + error.message);
+        console.error(error);
+    }
+};
+
+window.firebaseRenderHistoryList = async function() {
+    const listEl = document.getElementById('historyList');
+    if (!listEl) return;
+
+    const q = query(collection(db, 'history'), where("userId", "==", currentUserId));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        listEl.innerHTML = '<li style="color:#666;padding:1rem;">No completed sessions yet.</li>';
+        return;
+    }
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+        const h = docSnap.data();
+        const completionPercentage = h.totalItems > 0 ? Math.round((h.completedItemsCount / h.totalItems) * 100) : 0;
+        const finishedDate = new Date(h.finishedAtTimestamp).toLocaleString();
+
+        const items = (h.items || [])
+            .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
+            .join('');
+
+        html += `
+    <li>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>${h.date}</strong>
+          <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items (${completionPercentage}%)</p>
+          <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${finishedDate}</p>
+        </div>
+      </div>
+      <div style="margin-top:0.5rem;">${items}</div>
+    </li>
+`;
+    });
+
+    listEl.innerHTML = html;
+};
+
+window.firebaseSaveMatchRecord = async function(matchData) {
+    try {
+        const matchRecord = {
+            date: matchData.date,
+            opponent: matchData.opponent,
+            score: matchData.score,
+            result: matchData.result,
+            savedAtTimestamp: Date.now(),
+            userId: currentUserId
+        };
+
+        await addDoc(collection(db, 'matches'), matchRecord);
+
+        alert('Match record saved!');
+        document.getElementById('matchForm').reset();
+        await window.firebaseRenderMatchHistory();
+    } catch (error) {
+        alert('Error saving match record: ' + error.message);
+        console.error(error);
+    }
+};
+
+window.firebaseRenderMatchHistory = async function() {
+    const listEl = document.getElementById('matchHistoryList');
+    if (!listEl) return;
+
+    const q = query(collection(db, 'matches'), where("userId", "==", currentUserId));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        listEl.innerHTML = '<li style="color:#666;padding:1rem;">No match records yet.</li>';
+        return;
+    }
+
+    let html = "";
+
+    snapshot.forEach(docSnap => {
+        const m = docSnap.data();
+        const savedDate = new Date(m.savedAtTimestamp).toLocaleString();
+        const resultColor = m.result === 'Win' ? '#10b981' : m.result === 'Loss' ? '#ef4444' : '#f59e0b';
+
+        html += `
+    <li>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;">
+          <strong>${m.date}</strong> vs <strong>${m.opponent}</strong>
+          <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Score: ${m.score}</p>
+          <p style="color:${resultColor};font-size:0.9rem;font-weight:600;margin:0.3rem 0 0 0;">${m.result}</p>
+          <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${savedDate}</p>
+        </div>
+      </div>
+    </li>
+`;
+    });
+
+    listEl.innerHTML = html;
+};
+
+window.firebaseClearTrainingHistory = async function() {
+    try {
+        const q = query(collection(db, 'history'), where("userId", "==", currentUserId));
+        const snapshot = await getDocs(q);
+        const deletePromises = [];
+        
+        snapshot.forEach(docSnap => {
+            deletePromises.push(deleteDoc(doc(db, 'history', docSnap.id)));
+        });
+        
+        await Promise.all(deletePromises);
+        
+        alert('Training history cleared!');
+        await window.firebaseRenderHistoryList();
+    } catch (error) {
+        alert('Error clearing training history: ' + error.message);
+        console.error(error);
+    }
+};
+
+window.firebaseClearMatchHistory = async function() {
+    try {
+        const q = query(collection(db, 'matches'), where("userId", "==", currentUserId));
+        const snapshot = await getDocs(q);
+        const deletePromises = [];
+        
+        snapshot.forEach(docSnap => {
+            deletePromises.push(deleteDoc(doc(db, 'matches', docSnap.id)));
+        });
+        
+        await Promise.all(deletePromises);
+        
+        alert('Match history cleared!');
+        await window.firebaseRenderMatchHistory();
+    } catch (error) {
+        alert('Error clearing match history: ' + error.message);
+        console.error(error);
+    }
+};
 
 // TEST FUNCTIONS
 window.saveSession = async function(session){
