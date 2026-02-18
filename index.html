@@ -5,6 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Tennis Training</title>
     <style>
+        /* Journal Modal Large & Responsive */
+        #journalEntryModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(20, 28, 38, 0.55);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.18s;
+        }
+        #journalEntryModal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .journal-modal-box {
+            background: white;
+            padding: 2.2rem 2.5rem;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(15,23,42,0.13);
+            width: 90vw;
+            max-width: 900px;
+            min-width: 320px;
+            min-height: 200px;
+            animation: journalModalPop 0.22s cubic-bezier(.4,1.4,.6,1) 1;
+            transform: scale(1);
+            opacity: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        @keyframes journalModalPop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #journalEntryTextarea {
+            min-height: 250px;
+            font-size: 1.08rem;
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid #e6edf3;
+            background: linear-gradient(180deg,#fff,#fcfeff);
+            color: #0f2540;
+            resize: vertical;
+        }
+        @media (max-width: 700px) {
+            .journal-modal-box { padding: 1.1rem 0.7rem; max-width: 99vw; }
+            #journalEntryTextarea { font-size: 1rem; }
+        }
         :root{
             --bg:#f4f6f9;
             --card:#ffffff;
@@ -136,16 +185,10 @@
             background: var(--accent-600);
         }
     
-.calendar-cell{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin:3px}
-.cal-train{background:#ef4444;color:white}
-.cal-match{background:#3b82f6;color:white}
-.calendar-row{display:flex}
-
-
-/* ===== Calendar Tab Layout Fix ===== */
+/* Calendar Tab Styles */
 #calendar{
   max-width:900px;
-  margin:auto;
+  margin:0 auto;
 }
 
 #calendarGrid{
@@ -153,13 +196,16 @@
   flex-direction:column;
   align-items:center;
   width:100%;
+  padding:1rem;
 }
 
 .calendar-row{
   display:grid;
   grid-template-columns: repeat(7, 1fr);
   width:100%;
-  max-width:420px;
+  max-width:550px;
+  gap:8px;
+  margin-bottom:8px;
 }
 
 .calendar-cell{
@@ -169,18 +215,31 @@
   align-items:center;
   justify-content:center;
   border-radius:10px;
-  margin:2px;
   font-weight:600;
+  font-size:0.95rem;
   background:#f1f5f9;
+  color:#0f2540;
+  cursor:default;
+  transition:all 0.2s ease;
+}
+
+.calendar-cell:hover{
+  transform:scale(1.05);
 }
 
 .cal-train{ background:#ef4444; color:white; }
 .cal-match{ background:#3b82f6; color:white; }
+.cal-train:hover, .cal-match:hover{ transform:scale(1.08); }
 
-/* selectors spacing */
 #calendar select{
-  padding:0.5rem;
+  padding:0.75rem 1rem;
   border-radius:8px;
+  border:1px solid #e6edf3;
+  background:linear-gradient(180deg,#fff,#fcfeff);
+  font-weight:600;
+  margin-right:0.8rem;
+  margin-bottom:1.5rem;
+  cursor:pointer;
 }
 
 </style>
@@ -216,7 +275,8 @@
             <button class="tab-button" data-tab="sessions" onclick="switchTab('sessions', this)">Sessions</button>
             <button class="tab-button" data-tab="match" onclick="switchTab('match', this)">Match</button>
             <button class="tab-button" data-tab="history" onclick="switchTab('history', this)">History</button>
-<button class="tab-button" data-tab="calendar" onclick="switchTab('calendar', this)">Calendar</button>
+            <button class="tab-button" data-tab="calendar" onclick="switchTab('calendar', this)">Calendar</button>
+            <button class="tab-button" data-tab="journal" onclick="switchTab('journal', this)">Journal</button>
             <span id="currentUserDisplay" style="margin-left:auto;padding:0.5rem 1rem;color:var(--text);font-size:0.9rem;align-self:center;"></span>
             <button class="submit-btn" style="background:#ef4444;padding:0.5rem 1rem;font-size:0.9rem;" onclick="handleLogout()">Logout</button>
         </div>
@@ -345,6 +405,13 @@
             <div id="calendarGrid"></div>
         </div>
 
+        <!-- Journal Tab -->
+        <div id="journal" class="tab-content">
+            <h1>Journal Entries</h1>
+            <ul id="journalList" class="session-list"></ul>
+        </div>
+    </div>
+
 <!-- Session Execution Modal Overlay -->
     <div id="sessionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
         <div style="background:var(--card);margin:0 auto;max-width:600px;min-height:100vh;position:relative;padding:2rem 1.5rem;">
@@ -377,6 +444,20 @@
 
             const target = document.getElementById(tabName);
             if (target) target.classList.add('active');
+
+            // Initialize calendar when calendar tab is opened
+            if (tabName === 'calendar') {
+                setTimeout(() => {
+                    initCalendar();
+                }, 50);
+            }
+
+            // Render journal list when journal tab is opened
+            if (tabName === 'journal') {
+                setTimeout(async () => {
+                    await window.firebaseRenderJournalList();
+                }, 50);
+            }
 
             // If an element was provided (nav button or inline button), mark it active
             if (el) {
@@ -637,7 +718,8 @@
 <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
@@ -660,8 +742,10 @@
   // Initialize Firestore
   const db = getFirestore(app);
   const auth = getAuth(app);
+  const storage = getStorage(app);
 
 window.db = db;
+window.storage = storage;
 window.addDoc = addDoc;
 window.getDocs = getDocs;
 window.collection = collection;
@@ -672,6 +756,10 @@ window.deleteDoc = deleteDoc;
 window.query = query;
 window.where = where;
 window.setDoc = setDoc;
+window.orderBy = orderBy;
+window.ref = ref;
+window.uploadBytes = uploadBytes;
+window.getDownloadURL = getDownloadURL;
 
 // Authentication Functions
 window.checkAuthState = function() {
@@ -688,10 +776,13 @@ window.checkAuthState = function() {
         document.getElementById('mainContainer').style.display = 'block';
         
         // Load user data
-        setTimeout(() => {
+        setTimeout(async () => {
+            await fetchJournalsForUser();
             renderSessionsList();
             window.firebaseRenderHistoryList();
-            window.firebaseRenderMatchHistory(); initCalendar();
+            window.firebaseRenderMatchHistory();
+            await window.firebaseRenderJournalList();
+            initCalendar();
         }, 500);
         renderDesignItems();
     } else {
@@ -724,10 +815,13 @@ window.firebaseSignIn = async function(username, password) {
         document.getElementById('signInPassword').value = '';
         
         // Load user data
-        setTimeout(() => {
+        setTimeout(async () => {
+            await fetchJournalsForUser();
             renderSessionsList();
             window.firebaseRenderHistoryList();
-            window.firebaseRenderMatchHistory(); initCalendar();
+            window.firebaseRenderMatchHistory();
+            await window.firebaseRenderJournalList();
+            initCalendar();
         }, 500);
     } catch (error) {
         alert('Sign in failed: ' + error.message);
@@ -934,32 +1028,32 @@ window.firebaseRenderHistoryList = async function() {
         return;
     }
 
-    let html = "";
-
-    snapshot.forEach(docSnap => {
-        const h = docSnap.data();
-        const completionPercentage = h.totalItems > 0 ? Math.round((h.completedItemsCount / h.totalItems) * 100) : 0;
-        const finishedDate = new Date(h.finishedAtTimestamp).toLocaleString();
-
-        const items = (h.items || [])
-            .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
-            .join('');
-
-        html += `
-    <li>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <strong>${h.date}</strong>
-          <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items (${completionPercentage}%)</p>
-          <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${finishedDate}</p>
-        </div>
-      </div>
-      <div style="margin-top:0.5rem;">${items}</div>
-    </li>
+        let html = "";
+        await fetchJournalsForUser();
+        snapshot.forEach(docSnap => {
+                const h = docSnap.data();
+                const completionPercentage = h.totalItems > 0 ? Math.round((h.completedItemsCount / h.totalItems) * 100) : 0;
+                const finishedDate = new Date(h.finishedAtTimestamp).toLocaleString();
+                const items = (h.items || [])
+                        .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
+                        .join('');
+                const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
+                const journalBtn = `<button class='submit-btn' style='background:#1abc9c;margin-top:0.5rem;' onclick='openJournalForRecord("session", "${docSnap.id}", "${h.date}")'>${journalBtnText}</button>`;
+                html += `
+        <li>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <strong>${h.date}</strong>
+                    <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items (${completionPercentage}%)</p>
+                    <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${finishedDate}</p>
+                    ${journalBtn}
+                </div>
+            </div>
+            <div style="margin-top:0.5rem;">${items}</div>
+        </li>
 `;
-    });
-
-    listEl.innerHTML = html;
+        });
+        listEl.innerHTML = html;
 };
 
 window.firebaseSaveMatchRecord = async function(matchData) {
@@ -996,28 +1090,30 @@ window.firebaseRenderMatchHistory = async function() {
         return;
     }
 
-    let html = "";
 
-    snapshot.forEach(docSnap => {
-        const m = docSnap.data();
-        const savedDate = new Date(m.savedAtTimestamp).toLocaleString();
-        const resultColor = m.result === 'Win' ? '#10b981' : m.result === 'Loss' ? '#ef4444' : '#f59e0b';
-
-        html += `
-    <li>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1;">
-          <strong>${m.date}</strong> vs <strong>${m.opponent}</strong>
-          <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Score: ${m.score}</p>
-          <p style="color:${resultColor};font-size:0.9rem;font-weight:600;margin:0.3rem 0 0 0;">${m.result}</p>
-          <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${savedDate}</p>
-        </div>
-      </div>
-    </li>
-`;
-    });
-
-    listEl.innerHTML = html;
+        let html = "";
+        await fetchJournalsForUser();
+        snapshot.forEach(docSnap => {
+            const m = docSnap.data();
+            const savedDate = new Date(m.savedAtTimestamp).toLocaleString();
+            const resultColor = m.result === 'Win' ? '#10b981' : m.result === 'Loss' ? '#ef4444' : '#f59e0b';
+            const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
+            const journalBtn = `<button class='submit-btn' style='background:#1abc9c;margin-top:0.5rem;' onclick='openJournalForRecord("match", "${docSnap.id}", "${m.date}")'>${journalBtnText}</button>`;
+            html += `
+        <li>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1;">
+              <strong>${m.date}</strong> vs <strong>${m.opponent}</strong>
+              <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Score: ${m.score}</p>
+              <p style="color:${resultColor};font-size:0.9rem;font-weight:600;margin:0.3rem 0 0 0;">${m.result}</p>
+              <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${savedDate}</p>
+              ${journalBtn}
+            </div>
+          </div>
+        </li>
+    `;
+        });
+        listEl.innerHTML = html;
 };
 
 window.firebaseClearTrainingHistory = async function() {
@@ -1073,52 +1169,391 @@ window.loadSessions = async function(){
 
 </script>
 
+<!-- Journal Modal HTML (replaces previous modal if any) -->
+<div id="journalEntryModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:100;align-items:center;justify-content:center;">
+    <div id="journalModalBox" class="journal-modal-box">
+        <h2 id="journalModalTitle">Journal Entry</h2>
+        <textarea id="journalEntryTextarea" placeholder="Write your thoughts..."></textarea>
+        <div>
+            <label style="display:block;margin-bottom:0.5rem;color:#233348;font-weight:600;font-size:.95rem">Voice Note (optional)</label>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+                <button class="submit-btn" id="startRecordingVoiceBtn" style="background:#ef4444;" onclick="startVoiceRecording()">🎤 Start Recording</button>
+                <button class="submit-btn" id="stopRecordingVoiceBtn" style="background:#f59e0b;display:none;" onclick="stopVoiceRecording()">⏹ Stop</button>
+                <span id="recordingTimer" style="color:#ef4444;font-weight:600;font-size:0.9rem;display:none;">0:00</span>
+            </div>
+            <audio id="voicePreviewAudio" style="display:none;width:100%;margin-top:1rem;" controls></audio>
+            <div id="voicePreviewContainer" style="display:none;margin-top:1rem;padding:0.8rem;background:#f1f5f9;border-radius:10px;">
+                <p style="color:#233348;font-weight:600;font-size:0.9rem;margin:0 0 0.5rem 0;">Voice Note Preview:</p>
+                <audio id="voicePlayback" style="width:100%;" controls></audio>
+                <button class="submit-btn" style="background:#ef4444;margin-top:0.5rem;padding:0.5rem 0.8rem;font-size:0.85rem;" onclick="clearVoiceRecording()">Clear Voice Note</button>
+            </div>
+        </div>
+        <div style="display:flex;gap:0.7rem;">
+            <button class="submit-btn" id="saveJournalBtn" onclick="saveJournalEntry()">Save</button>
+            <button class="submit-btn" style="background:#67748a;" onclick="closeJournalEntryModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Journal Global State ---
+let currentJournalContext = null; // { type, recordId, date }
+let currentJournalDocId = null;
+let journalMapByRecordId = {}; // { [recordId]: { docId, ...data } }
+let mediaRecorder = null;
+let recordingChunks = [];
+let recordingStartTime = null;
+let recordingTimerInterval = null;
+let currentVoiceBlob = null;
+
+// --- Modal UI Functions ---
+function openJournalForRecord(type, recordId, date) {
+    currentJournalContext = { type, recordId, date };
+    currentJournalDocId = null;
+    clearVoiceRecording();
+    const modal = document.getElementById('journalEntryModal');
+    const textarea = document.getElementById('journalEntryTextarea');
+    const title = document.getElementById('journalModalTitle');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('active');
+        textarea.focus();
+        window.scrollTo({top:0,behavior:'smooth'});
+    }, 10);
+    // Title
+    title.textContent = (journalMapByRecordId[recordId]) ? 'Edit Journal' : 'Add Journal';
+    textarea.value = '';
+    // Query Firestore for existing journal
+    const journal = journalMapByRecordId[recordId];
+    if (journal) {
+        textarea.value = journal.text;
+        currentJournalDocId = journal.docId;
+        if (journal.voiceUrl) {
+            document.getElementById('voicePlayback').src = journal.voiceUrl;
+            document.getElementById('voicePreviewContainer').style.display = 'block';
+            currentVoiceBlob = null; // Clear local blob for edit
+        }
+    } else {
+        textarea.value = '';
+        currentJournalDocId = null;
+    }
+}
+
+function closeJournalEntryModal() {
+    const modal = document.getElementById('journalEntryModal');
+    modal.classList.remove('active');
+    setTimeout(() => { modal.style.display = 'none'; }, 180);
+    currentJournalContext = null;
+    currentJournalDocId = null;
+    clearVoiceRecording();
+}
+
+// --- Voice Recording Functions ---
+async function startVoiceRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        recordingChunks = [];
+        recordingStartTime = Date.now();
+        recordingTimerInterval = setInterval(updateRecordingTimer, 100);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            recordingChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordingChunks, { type: 'audio/webm' });
+            currentVoiceBlob = blob;
+            const url = URL.createObjectURL(blob);
+            showVoicePlayback(url);
+            clearInterval(recordingTimerInterval);
+            document.getElementById('recordingTimer').style.display = 'none';
+        };
+        
+        mediaRecorder.start();
+        document.getElementById('startRecordingVoiceBtn').style.display = 'none';
+        document.getElementById('stopRecordingVoiceBtn').style.display = 'block';
+        document.getElementById('recordingTimer').style.display = 'inline';
+    } catch (error) {
+        alert('Microphone access denied: ' + error.message);
+    }
+}
+
+function stopVoiceRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('stopRecordingVoiceBtn').style.display = 'none';
+        document.getElementById('startRecordingVoiceBtn').style.display = 'block';
+    }
+}
+
+function updateRecordingTimer() {
+    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    document.getElementById('recordingTimer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function showVoicePlayback(url) {
+    document.getElementById('voicePlayback').src = url;
+    document.getElementById('voicePreviewContainer').style.display = 'block';
+}
+
+function clearVoiceRecording() {
+    currentVoiceBlob = null;
+    document.getElementById('voicePreviewContainer').style.display = 'none';
+    document.getElementById('voicePlayback').src = '';
+    document.getElementById('recordingTimer').textContent = '0:00';
+}
+
+async function saveJournalEntry() {
+    const textarea = document.getElementById('journalEntryTextarea');
+    let text = textarea.value.trim();
+    if (!text && !currentVoiceBlob) { textarea.focus(); alert('Please add text or record a voice note'); return; }
+    
+    const { type, recordId, date } = currentJournalContext;
+    let voiceUrl = null;
+    
+    // Upload voice to Firebase Storage if exists
+    if (currentVoiceBlob) {
+        try {
+            const fileName = `journals/${currentUserId}/${recordId}_${Date.now()}.webm`;
+            const fileRef = ref(storage, fileName);
+            await uploadBytes(fileRef, currentVoiceBlob);
+            voiceUrl = await getDownloadURL(fileRef);
+        } catch (error) {
+            alert('Error uploading voice: ' + error.message);
+            return;
+        }
+    }
+    
+    const journalsRef = collection(db, 'journals');
+    if (currentJournalDocId) {
+        // Update
+        const updateData = { text };
+        if (voiceUrl) updateData.voiceUrl = voiceUrl;
+        await updateDoc(doc(db, 'journals', currentJournalDocId), updateData);
+    } else {
+        // Add
+        const docData = {
+            userId: currentUserId,
+            type,
+            recordId,
+            date,
+            text,
+            createdAt: Date.now()
+        };
+        if (voiceUrl) docData.voiceUrl = voiceUrl;
+        await addDoc(journalsRef, docData);
+    }
+    closeJournalEntryModal();
+    await refreshAllJournalUI();
+}
+
+// --- Refresh Logic ---
+async function refreshAllJournalUI() {
+    await fetchJournalsForUser();
+    if (window.firebaseRenderHistoryList) await window.firebaseRenderHistoryList();
+    if (window.firebaseRenderMatchHistory) await window.firebaseRenderMatchHistory();
+    if (window.firebaseRenderJournalList) await window.firebaseRenderJournalList();
+}
+
+// --- Fetch all journals for user and build map ---
+async function fetchJournalsForUser() {
+    journalMapByRecordId = {};
+    const q = query(collection(db, 'journals'), where('userId', '==', currentUserId));
+    const snapshot = await getDocs(q);
+    snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        journalMapByRecordId[data.recordId] = { ...data, docId: docSnap.id };
+    });
+}
+
+// --- Journal Tab Renderer ---
+window.firebaseRenderJournalList = async function() {
+    const listEl = document.getElementById('journalList');
+    if (!listEl) return;
+    const q = query(collection(db, 'journals'), where('userId', '==', currentUserId), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        listEl.innerHTML = '<li style="color:#666;padding:1.5rem;text-align:center;">No journal entries yet.</li>';
+        return;
+    }
+    let html = '';
+    snapshot.forEach(docSnap => {
+        const j = docSnap.data();
+        const typeColor = j.type === 'session' ? '#ef4444' : '#3b82f6';
+        const voiceBtn = j.voiceUrl ? `<audio style='width:100%;max-height:40px;margin-top:0.5rem;' controls><source src='${j.voiceUrl}' type='audio/webm'></audio>` : '';
+        html += `<li>
+          <div style='display:flex;justify-content:space-between;align-items:flex-start;gap:1.2rem;'>
+            <div style='flex:1;'>
+              <div style='font-size:1.08rem;font-weight:600;color:#0f2540;'>${j.date} <span style='background:${typeColor};color:white;padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;font-weight:500;'>${j.type}</span></div>
+              <div style='color:var(--muted);font-size:1.01rem;margin:0.5rem 0 0 0;white-space:pre-line;'>${j.text.length > 180 ? j.text.slice(0,180)+'...' : j.text}</div>
+              ${voiceBtn}
+            </div>
+            <button class='submit-btn' style='background:#1abc9c;margin-left:1rem;flex-shrink:0;' onclick='openJournalForRecord("${j.type}", "${j.recordId}", "${j.date}")'>Edit</button>
+          </div>
+        </li>`;
+    });
+    listEl.innerHTML = html;
+}
+</script>
+
 <script>
 let calTrainDates={}, calMatchDates={};
 
 function initCalendar(){
- const m=document.getElementById("calMonth");
- const y=document.getElementById("calYear");
- if(!m) return;
- const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
- months.forEach((mo,i)=>m.innerHTML+=`<option value="${i}">${mo}</option>`);
- const cy=new Date().getFullYear();
- for(let yr=cy-3;yr<=cy+3;yr++) y.innerHTML+=`<option value="${yr}">${yr}</option>`;
- const now=new Date();
- m.value=now.getMonth(); y.value=now.getFullYear();
- m.onchange=renderCalendar; y.onchange=renderCalendar;
- loadCalendarData();
+    const m=document.getElementById("calMonth");
+    const y=document.getElementById("calYear");
+    if(!m || !y) {
+        console.error('Calendar elements not found');
+        return;
+    }
+    
+    // Clear previous options
+    m.innerHTML = '';
+    y.innerHTML = '';
+    
+    const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    months.forEach((mo,i)=>{
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = mo;
+        m.appendChild(opt);
+    });
+    
+    const cy=new Date().getFullYear();
+    for(let yr=cy-2;yr<=cy+2;yr++) {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = yr;
+        y.appendChild(opt);
+    }
+    
+    const now=new Date();
+    m.value=now.getMonth(); 
+    y.value=now.getFullYear();
+    
+    m.onchange=renderCalendar; 
+    y.onchange=renderCalendar;
+    
+    loadCalendarData();
 }
 
 async function loadCalendarData(){
- calTrainDates={}; calMatchDates={};
- const hSnap=await getDocs(query(collection(db,"history"), where("userId","==",currentUserId)));
- hSnap.forEach(d=> calTrainDates[d.data().date]=true);
- const mSnap=await getDocs(query(collection(db,"matches"), where("userId","==",currentUserId)));
- mSnap.forEach(d=> calMatchDates[d.data().date]=true);
- renderCalendar();
+    try {
+        calTrainDates={}; 
+        calMatchDates={};
+        
+        if(!currentUserId) {
+            console.log('No user logged in');
+            renderCalendar();
+            return;
+        }
+        
+        const hSnap=await getDocs(query(collection(db,"history"), where("userId","==",currentUserId)));
+        hSnap.forEach(d=> {
+            const dateStr = d.data().date;
+            if(dateStr) {
+                calTrainDates[dateStr]=true;
+                console.log('Training date:', dateStr);
+            }
+        });
+        
+        const mSnap=await getDocs(query(collection(db,"matches"), where("userId","==",currentUserId)));
+        mSnap.forEach(d=> {
+            const dateStr = d.data().date;
+            if(dateStr) {
+                calMatchDates[dateStr]=true;
+                console.log('Match date:', dateStr);
+            }
+        });
+        
+        renderCalendar();
+    } catch (error) {
+        console.error('Error loading calendar data:', error);
+        renderCalendar();
+    }
 }
 
 function renderCalendar(){
- const month=parseInt(document.getElementById("calMonth").value);
- const year=parseInt(document.getElementById("calYear").value);
- const first=new Date(year,month,1);
- const last=new Date(year,month+1,0);
- const start=first.getDay();
- const days=last.getDate();
- const grid=document.getElementById("calendarGrid");
- grid.innerHTML="";
- let row=document.createElement("div"); row.className="calendar-row";
- for(let i=0;i<start;i++) row.innerHTML+=`<div class="calendar-cell"></div>`;
- for(let d=1;d<=days;d++){
-  const key=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-  let cls="";
-  if(calTrainDates[key]) cls="cal-train";
-  if(calMatchDates[key]) cls="cal-match";
-  row.innerHTML+=`<div class="calendar-cell ${cls}">${d}</div>`;
-  if((start+d)%7===0){ grid.appendChild(row); row=document.createElement("div"); row.className="calendar-row"; }
- }
- grid.appendChild(row);
+    const monthEl=document.getElementById("calMonth");
+    const yearEl=document.getElementById("calYear");
+    
+    if(!monthEl || !yearEl) {
+        console.error('Calendar selectors not found');
+        return;
+    }
+    
+    const month=parseInt(monthEl.value);
+    const year=parseInt(yearEl.value);
+    
+    const first=new Date(year,month,1);
+    const last=new Date(year,month+1,0);
+    const start=first.getDay();
+    const days=last.getDate();
+    const grid=document.getElementById("calendarGrid");
+    
+    if(!grid) {
+        console.error('Calendar grid not found');
+        return;
+    }
+    
+    grid.innerHTML="";
+    
+    // Create header row with day names
+    const headerRow=document.createElement("div"); 
+    headerRow.className="calendar-row";
+    const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    dayNames.forEach(day=>{
+        const dayCell=document.createElement("div");
+        dayCell.className="calendar-cell";
+        dayCell.textContent=day;
+        dayCell.style.fontWeight="700";
+        dayCell.style.color="#0f2540";
+        dayCell.style.background="transparent";
+        headerRow.appendChild(dayCell);
+    });
+    grid.appendChild(headerRow);
+    
+    let row=document.createElement("div"); 
+    row.className="calendar-row";
+    
+    // Add empty cells for days before month starts
+    for(let i=0;i<start;i++) {
+        const emptyCell=document.createElement("div");
+        emptyCell.className="calendar-cell";
+        emptyCell.style.background='transparent';
+        row.appendChild(emptyCell);
+    }
+    
+    // Add date cells
+    for(let d=1;d<=days;d++){
+        const key=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const cell=document.createElement("div");
+        cell.className="calendar-cell";
+        
+        if(calTrainDates[key]) {
+            cell.classList.add("cal-train");
+        } else if(calMatchDates[key]) {
+            cell.classList.add("cal-match");
+        }
+        
+        cell.textContent=d;
+        row.appendChild(cell);
+        
+        if((start+d)%7===0){ 
+            grid.appendChild(row); 
+            row=document.createElement("div"); 
+            row.className="calendar-row"; 
+        }
+    }
+    
+    // Append final row if it has cells
+    if(row.children.length > 0) grid.appendChild(row);
+    
+    console.log('Calendar rendered for', month, year);
 }
 </script>
 
