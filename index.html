@@ -405,14 +405,50 @@
             justify-content:space-between;
             flex-wrap:wrap;
         }
+        .actuary-note-card.dragging{opacity:0.6;transform:scale(0.98)}
         .actuary-note-meta{flex:1 1 260px;min-width:240px}
         .actuary-note-meta h4{margin:0 0 0.35rem 0;color:#0f2540}
         .actuary-progress{height:8px;background:#eef4f8;border-radius:999px;overflow:hidden}
         .actuary-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),#34d399);width:35%}
-        .actuary-editor-header{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;margin-bottom:1rem}
-        .actuary-editor-title{flex:1 1 260px;min-width:240px}
-        .actuary-editor-actions{display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center}
-        .actuary-editor-actions .muted{margin-left:0.25rem}
+        .actuary-editor-modal{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(20, 28, 38, 0.55);
+            backdrop-filter: blur(10px);
+            z-index:130;
+            align-items:stretch;
+            justify-content:center;
+        }
+        .actuary-editor-modal.active{display:flex}
+        .actuary-editor-box{
+            background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
+            width:100%;
+            max-width:1200px;
+            margin:1.2rem;
+            border-radius:18px;
+            box-shadow:0 24px 60px rgba(15,23,42,0.22);
+            display:flex;
+            flex-direction:column;
+            padding:1.6rem;
+            gap:1rem;
+            overflow:hidden;
+        }
+        .actuary-editor-top{display:flex;gap:0.8rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+        .actuary-editor-modes{display:flex;gap:0.6rem;flex-wrap:wrap}
+        .actuary-editor-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+        .actuary-editor-row input{flex:1 1 320px}
+        .actuary-editor-body{
+            flex:1 1 auto;
+            border:1px solid #e6edf3;
+            border-radius:14px;
+            padding:1rem;
+            background:linear-gradient(180deg,#ffffff,#fcfeff);
+            overflow:auto;
+            min-height:320px;
+        }
+        .actuary-editor-body[contenteditable="true"]{outline:2px solid rgba(26,188,156,0.25)}
+        .actuary-editor-footer{display:flex;gap:0.8rem;justify-content:flex-end;align-items:center;flex-wrap:wrap}
         .actuary-split{display:flex;gap:1rem}
         .actuary-panel{
             background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
@@ -424,19 +460,6 @@
         }
         .actuary-left{flex:0 0 60%}
         .actuary-right{flex:0 0 40%}
-        .actuary-mode-toggle{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.75rem}
-        .actuary-mode-toggle button{padding:0.45rem 0.8rem;font-size:0.9rem}
-        .actuary-mode-toggle button.active{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#fff}
-        #actuaryNotesEditor{min-height:260px}
-        .actuary-notes-display{
-            min-height:260px;
-            border:1px solid #e6edf3;
-            border-radius:12px;
-            padding:0.9rem 1rem;
-            background:linear-gradient(180deg,#fff,#fcfeff);
-            white-space:pre-wrap;
-            color:#0f2540;
-        }
         #actuaryAddQuestionPopup{
             position:absolute;
             display:none;
@@ -478,6 +501,7 @@
             .tab-content{padding:1.05rem}
             .actuary-split{flex-direction:column}
             .actuary-left,.actuary-right{flex:1 1 auto}
+            .actuary-editor-box{margin:0;border-radius:0;min-height:100vh}
         }
 
         @media (max-width:520px){
@@ -948,51 +972,9 @@
                         <h2 id="actuarySubjectTitle" style="margin:0;color:#0f2540;"></h2>
                         <p class="muted" style="margin:0.2rem 0 0 0;">All notes for this subject</p>
                     </div>
-                    <button class="submit-btn btn-sm" onclick="createNewNote(actuaryState.subject)">+ Add New Note</button>
+                    <button class="submit-btn btn-sm" onclick="openNoteEditor()">+ Add New Note</button>
                 </div>
                 <div id="actuaryNotesList" class="actuary-notes-list"></div>
-            </div>
-
-            <div id="actuaryEditorView" style="display:none;">
-                <div class="actuary-editor-header">
-                    <button class="submit-btn btn-muted btn-sm" onclick="showSubjectNotes(actuaryState.subject)">← Notes List</button>
-                    <div class="actuary-editor-title">
-                        <label for="actuaryNoteTitle">Title</label>
-                        <input id="actuaryNoteTitle" type="text" placeholder="Note title">
-                    </div>
-                    <div class="actuary-editor-actions">
-                        <button class="submit-btn btn-danger btn-sm" onclick="deleteNote(actuaryState.noteId)">Delete Note</button>
-                        <button class="submit-btn btn-sm" onclick="saveNotes()">Save Notes</button>
-                        <span class="muted" id="actuaryNotesStatus"></span>
-                    </div>
-                </div>
-
-                <div class="actuary-split">
-                    <div class="actuary-panel actuary-left" id="actuaryNotesPanel">
-                        <div class="actuary-mode-toggle">
-                            <button class="submit-btn btn-muted btn-sm active" id="actuaryReadModeBtn" onclick="setActuaryMode('read')">Read Mode</button>
-                            <button class="submit-btn btn-sm" id="actuaryEditModeBtn" onclick="setActuaryMode('edit')">Edit Mode</button>
-                        </div>
-                        <div id="actuaryNotesDisplay" class="actuary-notes-display"></div>
-                        <textarea id="actuaryNotesEditor" style="display:none;" placeholder="Write notes for this section..."></textarea>
-                        <div id="actuaryAddQuestionPopup">
-                            <button class="submit-btn btn-sm" onclick="openActuaryQuestionInput()">Add Question</button>
-                        </div>
-                    </div>
-                    <div class="actuary-panel actuary-right">
-                        <h3 style="margin-bottom:0.6rem;">Questions</h3>
-                        <div id="actuaryQuestionInput" class="actuary-question-input" style="display:none;">
-                            <label for="actuaryQuestionText">Question</label>
-                            <textarea id="actuaryQuestionText" placeholder="Type your question..."></textarea>
-                            <div class="actuary-answer-preview">Answer: <span id="actuarySelectedAnswer"></span></div>
-                            <div class="card-actions" style="margin-top:0.6rem;">
-                                <button class="submit-btn btn-sm" onclick="addQuestion()">Save Question</button>
-                                <button class="submit-btn btn-muted btn-sm" onclick="cancelActuaryQuestionInput()">Cancel</button>
-                            </div>
-                        </div>
-                        <div id="actuaryQuestionsList" class="actuary-questions-list"></div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -2278,17 +2260,13 @@ const actuarySubjects = ['SP1', 'SP2'];
 const actuaryState = {
     subject: null,
     noteId: null,
-    mode: 'read',
-    selectedAnswer: ''
+    mode: 'edit',
+    lastOrder: 0
 };
 
 let actuaryUiInitialized = false;
+let actuarySortable = null;
 window.actuaryState = actuaryState;
-
-function hideActuaryPopup() {
-    const popup = document.getElementById('actuaryAddQuestionPopup');
-    if (popup) popup.style.display = 'none';
-}
 
 function setActuaryNotesStatus(message, isError) {
     const statusEl = document.getElementById('actuaryNotesStatus');
@@ -2300,64 +2278,33 @@ function setActuaryNotesStatus(message, isError) {
 function setActuaryView(viewId) {
     const homeView = document.getElementById('actuaryHomeView');
     const subjectView = document.getElementById('actuarySubjectView');
-    const editorView = document.getElementById('actuaryEditorView');
     if (homeView) homeView.style.display = viewId === 'home' ? 'block' : 'none';
     if (subjectView) subjectView.style.display = viewId === 'subject' ? 'block' : 'none';
-    if (editorView) editorView.style.display = viewId === 'editor' ? 'block' : 'none';
 }
 
-function ensureLearnSubjectOptions() {
-    const subjectSelect = document.getElementById('actuaryLearnSubject');
-    if (!subjectSelect) return;
-    if (subjectSelect.options.length > 0) return;
-    subjectSelect.innerHTML = actuarySubjects.map(subject => `<option value="${subject}">${subject}</option>`).join('');
-}
+window.closeActuaryNoteModal = function() {
+    const modal = document.getElementById('actuaryNoteModal');
+    if (modal) modal.classList.remove('active');
+    actuaryState.noteId = null;
+};
+
+window.addQuestionFromHighlight = function(text) {
+    if (!text) return;
+    console.log('Highlight captured:', text);
+};
 
 window.initializeActuariesUI = function() {
     if (actuaryUiInitialized) return;
-    const notesDisplay = document.getElementById('actuaryNotesDisplay');
-    const notesPanel = document.getElementById('actuaryNotesPanel');
-    const popup = document.getElementById('actuaryAddQuestionPopup');
-    if (!notesDisplay || !notesPanel || !popup) return;
+    const editor = document.getElementById('actuaryNoteEditor');
+    if (!editor) return;
 
-    const handleSelection = () => {
-        if (!actuaryState.noteId || actuaryState.mode !== 'read') {
-            hideActuaryPopup();
-            return;
-        }
+    editor.addEventListener('mouseup', () => {
+        if (actuaryState.mode !== 'read') return;
         const selection = window.getSelection();
-        if (!selection || selection.isCollapsed) {
-            hideActuaryPopup();
-            return;
-        }
-        const selectedText = selection.toString().trim();
-        if (!selectedText) {
-            hideActuaryPopup();
-            return;
-        }
-        if (!notesDisplay.contains(selection.anchorNode) || !notesDisplay.contains(selection.focusNode)) {
-            hideActuaryPopup();
-            return;
-        }
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        const panelRect = notesPanel.getBoundingClientRect();
-        const top = Math.max(8, rect.top - panelRect.top - 36);
-        const left = Math.max(8, Math.min(rect.left - panelRect.left, panelRect.width - 120));
-        popup.style.top = `${top}px`;
-        popup.style.left = `${left}px`;
-        popup.style.display = 'block';
-        actuaryState.selectedAnswer = selectedText;
-    };
-
-    notesDisplay.addEventListener('mouseup', handleSelection);
-    notesDisplay.addEventListener('keyup', handleSelection);
-    notesDisplay.addEventListener('touchend', handleSelection);
-
-    document.addEventListener('click', (event) => {
-        if (!notesPanel.contains(event.target)) {
-            hideActuaryPopup();
-        }
+        if (!selection || selection.isCollapsed) return;
+        const text = selection.toString().trim();
+        if (!text) return;
+        window.addQuestionFromHighlight(text);
     });
 
     actuaryUiInitialized = true;
@@ -2366,29 +2313,26 @@ window.initializeActuariesUI = function() {
 window.showActuaryModules = function() {
     actuaryState.subject = null;
     actuaryState.noteId = null;
-    actuaryState.selectedAnswer = '';
-    if (window.cancelActuaryQuestionInput) window.cancelActuaryQuestionInput();
     setActuaryView('home');
-    hideActuaryPopup();
 };
 
 window.showSubjectNotes = async function(subject) {
     if (!subject) return;
     actuaryState.subject = subject;
-    actuaryState.noteId = null;
-    actuaryState.selectedAnswer = '';
-    if (window.cancelActuaryQuestionInput) window.cancelActuaryQuestionInput();
     const titleEl = document.getElementById('actuarySubjectTitle');
     if (titleEl) titleEl.textContent = `${subject} Notes`;
     setActuaryView('subject');
-    hideActuaryPopup();
-    await window.loadNotesForSubject(subject);
+    await window.loadNotes();
 };
 
 window.loadNotesForSubject = async function(subject) {
+    await window.showSubjectNotes(subject);
+};
+
+window.loadNotes = async function() {
     const listEl = document.getElementById('actuaryNotesList');
     if (!listEl) return;
-    if (!currentUserId || !subject) {
+    if (!currentUserId || !actuaryState.subject) {
         listEl.innerHTML = '<div class="muted">Sign in to view notes.</div>';
         return;
     }
@@ -2396,23 +2340,36 @@ window.loadNotesForSubject = async function(subject) {
     listEl.innerHTML = '<div class="muted">Loading notes...</div>';
 
     try {
+        console.log('Loading notes for:', {
+            userId: currentUserId,
+            subject: actuaryState.subject
+        });
+
         const q = query(
             collection(db, 'actuary_notes'),
             where('userId', '==', currentUserId),
-            where('subject', '==', subject),
-            orderBy('updatedAt', 'desc')
+            where('subject', '==', actuaryState.subject),
+            orderBy('order', 'asc')
         );
         const snapshot = await getDocs(q);
+        console.log('Notes loaded:', snapshot.size, 'documents');
+        
+        listEl.innerHTML = '';
+        actuaryState.lastOrder = 0;
+
         if (snapshot.empty) {
             listEl.innerHTML = '<div class="muted">No notes yet. Create your first note.</div>';
             return;
         }
 
-        listEl.innerHTML = '';
-        snapshot.forEach(docSnap => {
+        snapshot.forEach((docSnap, index) => {
             const data = docSnap.data();
+            const orderValue = typeof data.order === 'number' ? data.order : index;
+            actuaryState.lastOrder = Math.max(actuaryState.lastOrder, orderValue);
+
             const card = document.createElement('div');
             card.className = 'actuary-note-card';
+            card.setAttribute('data-note-id', docSnap.id);
 
             const meta = document.createElement('div');
             meta.className = 'actuary-note-meta';
@@ -2431,243 +2388,215 @@ window.loadNotesForSubject = async function(subject) {
             const editBtn = document.createElement('button');
             editBtn.className = 'submit-btn btn-sm';
             editBtn.textContent = 'Edit';
-            editBtn.addEventListener('click', () => window.openNoteEditor(docSnap.id));
+            editBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                window.openNoteEditor(docSnap.id);
+            });
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'submit-btn btn-danger btn-sm';
             deleteBtn.textContent = 'Delete';
-            deleteBtn.addEventListener('click', () => window.deleteNote(docSnap.id));
+            deleteBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                window.deleteNote(docSnap.id);
+            });
             actions.appendChild(editBtn);
             actions.appendChild(deleteBtn);
 
             card.appendChild(meta);
             card.appendChild(actions);
-            card.addEventListener('click', (event) => {
-                if (event.target === editBtn || event.target === deleteBtn) return;
-                window.openNoteEditor(docSnap.id);
-            });
+            card.addEventListener('click', () => window.openNoteEditor(docSnap.id));
 
             listEl.appendChild(card);
         });
-    } catch (error) {
-        console.error('Error loading notes', error);
-        listEl.innerHTML = '<div class="muted">Unable to load notes.</div>';
-    }
-};
 
-window.createNewNote = async function(subject) {
-    if (!currentUserId) return alert('Please sign in to create notes.');
-    if (!subject) return alert('Select a subject first.');
-    try {
-        const now = Date.now();
-        const docRef = await addDoc(collection(db, 'actuary_notes'), {
-            userId: currentUserId,
-            subject,
-            title: 'Untitled Note',
-            content: '',
-            createdAt: now,
-            updatedAt: now
-        });
-        await window.openNoteEditor(docRef.id);
+        enableDragSorting();
     } catch (error) {
-        console.error('Error creating note', error);
-        alert('Error creating note: ' + error.message);
+        console.error('Error loading notes:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let errorMsg = 'Unable to load notes.';
+        if (error.code === 'failed-precondition') {
+            errorMsg += ' Please create a Firestore index. Check the console for the index creation link.';
+        } else if (error.message) {
+            errorMsg += ' ' + error.message;
+        }
+        
+        listEl.innerHTML = `<div class="muted">${errorMsg}</div>`;
     }
 };
 
 window.openNoteEditor = async function(noteId) {
-    if (!noteId) return;
+    const modal = document.getElementById('actuaryNoteModal');
+    const titleInput = document.getElementById('actuaryNoteTitle');
+    const editor = document.getElementById('actuaryNoteEditor');
+    const modeButtons = document.getElementById('actuaryModeButtons');
+    if (!modal || !titleInput || !editor) return;
     if (!currentUserId) return alert('Please sign in to view notes.');
-    const titleInput = document.getElementById('actuaryNoteTitle');
-    const notesDisplay = document.getElementById('actuaryNotesDisplay');
-    const notesEditor = document.getElementById('actuaryNotesEditor');
 
-    try {
-        const noteRef = doc(db, 'actuary_notes', noteId);
-        const snap = await getDoc(noteRef);
-        if (!snap.exists()) {
-            alert('Note not found');
+    setActuaryNotesStatus('');
+    modal.classList.add('active');
+
+    if (noteId) {
+        try {
+            const noteRef = doc(db, 'actuary_notes', noteId);
+            const snap = await getDoc(noteRef);
+            if (!snap.exists()) {
+                alert('Note not found');
+                window.closeActuaryNoteModal();
+                return;
+            }
+            const data = snap.data();
+            if (data.userId !== currentUserId) {
+                alert('You do not have permission to view this note.');
+                window.closeActuaryNoteModal();
+                return;
+            }
+            actuaryState.noteId = noteId;
+            actuaryState.subject = data.subject;
+            titleInput.value = data.title || '';
+            editor.innerHTML = data.content || '';
+            if (modeButtons) modeButtons.style.display = 'flex';
+            toggleMode('read');
+        } catch (error) {
+            console.error('Error loading note', error);
+            alert('Error loading note: ' + error.message);
+        }
+    } else {
+        // Creating a new note - ensure subject is set
+        if (!actuaryState.subject) {
+            alert('Please select a subject first by clicking on a subject card.');
+            window.closeActuaryNoteModal();
             return;
         }
-        const data = snap.data();
-        if (data.userId !== currentUserId) {
-            alert('You do not have permission to view this note.');
-            return;
-        }
-        actuaryState.noteId = noteId;
-        actuaryState.subject = data.subject;
-        actuaryState.selectedAnswer = '';
-        if (window.cancelActuaryQuestionInput) window.cancelActuaryQuestionInput();
-        hideActuaryPopup();
-        if (titleInput) titleInput.value = data.title || '';
-        if (notesEditor) notesEditor.value = data.content || '';
-        if (notesDisplay) notesDisplay.textContent = data.content || 'No notes yet. Switch to Edit Mode to add.';
-        setActuaryNotesStatus('');
-        window.setActuaryMode('read');
-        setActuaryView('editor');
-        await window.loadQuestions(noteId);
-    } catch (error) {
-        console.error('Error loading note', error);
-        alert('Error loading note: ' + error.message);
+        actuaryState.noteId = null;
+        titleInput.value = '';
+        editor.innerHTML = '';
+        if (modeButtons) modeButtons.style.display = 'none';
+        toggleMode('edit');
     }
 };
 
-window.setActuaryMode = function(mode) {
-    const notesDisplay = document.getElementById('actuaryNotesDisplay');
-    const notesEditor = document.getElementById('actuaryNotesEditor');
-    const readBtn = document.getElementById('actuaryReadModeBtn');
-    const editBtn = document.getElementById('actuaryEditModeBtn');
-    actuaryState.mode = mode;
-    if (notesDisplay && notesEditor) {
-        if (mode === 'edit') {
-            notesDisplay.style.display = 'none';
-            notesEditor.style.display = 'block';
-            hideActuaryPopup();
-        } else {
-            notesDisplay.style.display = 'block';
-            notesEditor.style.display = 'none';
-        }
-    }
-    if (readBtn) readBtn.classList.toggle('active', mode === 'read');
-    if (editBtn) editBtn.classList.toggle('active', mode === 'edit');
-};
-
-window.saveNotes = async function() {
-    const notesEditor = document.getElementById('actuaryNotesEditor');
+window.saveNote = async function() {
     const titleInput = document.getElementById('actuaryNoteTitle');
-    if (!notesEditor || !titleInput) return;
-    if (!currentUserId) return alert('Please sign in to save notes.');
-    if (!actuaryState.noteId) return alert('Open a note first.');
-    const content = notesEditor.value.trim();
+    const editor = document.getElementById('actuaryNoteEditor');
+    if (!titleInput || !editor) {
+        console.error('Save failed: Title input or editor not found');
+        return;
+    }
+    if (!currentUserId) {
+        console.error('Save failed: No user logged in');
+        return alert('Please sign in to save notes.');
+    }
+    if (!actuaryState.subject) {
+        console.error('Save failed: No subject set', actuaryState);
+        return alert('Select a subject first.');
+    }
+
     const title = titleInput.value.trim() || 'Untitled Note';
+    const content = editor.innerHTML.trim();
+
+    console.log('Saving note:', {
+        noteId: actuaryState.noteId,
+        subject: actuaryState.subject,
+        title: title.substring(0, 30),
+        contentLength: content.length
+    });
+
     try {
-        await updateDoc(doc(db, 'actuary_notes', actuaryState.noteId), {
-            title,
-            content,
-            updatedAt: Date.now()
-        });
-        const notesDisplay = document.getElementById('actuaryNotesDisplay');
-        if (notesDisplay) notesDisplay.textContent = content || 'No notes yet. Switch to Edit Mode to add.';
-        setActuaryNotesStatus('Saved.');
-        window.setActuaryMode('read');
+        if (actuaryState.noteId) {
+            console.log('Updating existing note:', actuaryState.noteId);
+            await updateDoc(doc(db, 'actuary_notes', actuaryState.noteId), {
+                title,
+                content,
+                updatedAt: Date.now()
+            });
+            console.log('Note updated successfully');
+        } else {
+            const newOrder = (actuaryState.lastOrder || 0) + 1;
+            console.log('Creating new note with order:', newOrder);
+            const docRef = await addDoc(collection(db, 'actuary_notes'), {
+                userId: currentUserId,
+                subject: actuaryState.subject,
+                title,
+                content,
+                order: newOrder,
+                createdAt: Date.now()
+            });
+            console.log('Note created successfully:', docRef.id);
+        }
+        window.closeActuaryNoteModal();
+        await window.loadNotes();
     } catch (error) {
-        console.error('Error saving notes', error);
-        setActuaryNotesStatus('Error saving notes.', true);
+        console.error('Error saving note', error);
+        setActuaryNotesStatus('Error saving note: ' + error.message, true);
+        alert('Error saving note: ' + error.message);
     }
 };
 
 window.deleteNote = async function(noteId) {
     if (!noteId) return;
-    if (!confirm('Delete this note and its questions?')) return;
+    if (!confirm('Delete this note?')) return;
     try {
         const noteRef = doc(db, 'actuary_notes', noteId);
         const snap = await getDoc(noteRef);
         if (!snap.exists()) return alert('Note not found');
         const data = snap.data();
         if (data.userId !== currentUserId) return alert('You do not have permission to delete this note.');
-
-        const q = query(collection(db, 'actuary_questions'), where('userId', '==', currentUserId), where('noteId', '==', noteId));
-        const questionsSnap = await getDocs(q);
-        const deletes = [];
-        questionsSnap.forEach(docSnap => deletes.push(deleteDoc(doc(db, 'actuary_questions', docSnap.id))));
-        await Promise.all(deletes);
         await deleteDoc(noteRef);
-        actuaryState.noteId = null;
-        if (actuaryState.subject) {
-            await window.showSubjectNotes(actuaryState.subject);
-        } else {
-            window.showActuaryModules();
-        }
+        await window.loadNotes();
     } catch (error) {
         console.error('Error deleting note', error);
         alert('Error deleting note: ' + error.message);
     }
 };
 
-window.openActuaryQuestionInput = function() {
-    if (!actuaryState.selectedAnswer) return alert('Select text in the notes to attach as an answer.');
-    const inputBox = document.getElementById('actuaryQuestionInput');
-    const answerEl = document.getElementById('actuarySelectedAnswer');
-    const questionText = document.getElementById('actuaryQuestionText');
-    if (inputBox && answerEl && questionText) {
-        answerEl.textContent = actuaryState.selectedAnswer;
-        inputBox.style.display = 'block';
-        questionText.value = '';
-        questionText.focus();
-        hideActuaryPopup();
-    }
-};
-
-window.cancelActuaryQuestionInput = function() {
-    const inputBox = document.getElementById('actuaryQuestionInput');
-    const questionText = document.getElementById('actuaryQuestionText');
-    if (inputBox) inputBox.style.display = 'none';
-    if (questionText) questionText.value = '';
-};
-
-window.addQuestion = async function() {
-    if (!currentUserId) return alert('Please sign in to save questions.');
-    if (!actuaryState.noteId) return alert('Open a note first.');
-    const questionText = document.getElementById('actuaryQuestionText');
-    if (!questionText) return;
-    const question = questionText.value.trim();
-    if (!question) return alert('Please enter a question.');
-    if (!actuaryState.selectedAnswer) return alert('Select text in the notes to attach as an answer.');
-
-    try {
-        await addDoc(collection(db, 'actuary_questions'), {
-            userId: currentUserId,
-            noteId: actuaryState.noteId,
-            question,
-            answer: actuaryState.selectedAnswer,
-            createdAt: Date.now()
-        });
-        window.cancelActuaryQuestionInput();
-        await window.loadQuestions(actuaryState.noteId);
-    } catch (error) {
-        console.error('Error saving question', error);
-        alert('Error saving question: ' + error.message);
-    }
-};
-
-window.loadQuestions = async function(noteId) {
-    const listEl = document.getElementById('actuaryQuestionsList');
-    if (!listEl) return;
-    if (!currentUserId || !noteId) {
-        listEl.innerHTML = '<div class="muted">Open a note to view questions.</div>';
-        return;
+window.enableDragSorting = function() {
+    const listEl = document.getElementById('actuaryNotesList');
+    if (!listEl || typeof Sortable === 'undefined') return;
+    if (actuarySortable) {
+        actuarySortable.destroy();
+        actuarySortable = null;
     }
 
-    try {
-        const q = query(
-            collection(db, 'actuary_questions'),
-            where('userId', '==', currentUserId),
-            where('noteId', '==', noteId),
-            orderBy('createdAt', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-            listEl.innerHTML = '<div class="muted">No questions yet for this note.</div>';
-            return;
+    actuarySortable = Sortable.create(listEl, {
+        animation: 150,
+        onStart: (evt) => evt.item.classList.add('dragging'),
+        onEnd: async (evt) => {
+            evt.item.classList.remove('dragging');
+            await updateOrderInFirestore();
         }
+    });
+};
 
-        listEl.innerHTML = '';
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const details = document.createElement('details');
-            details.className = 'actuary-question';
-            const summary = document.createElement('summary');
-            summary.textContent = data.question || 'Question';
-            const answer = document.createElement('div');
-            answer.className = 'question-answer';
-            answer.textContent = data.answer || '';
-            details.appendChild(summary);
-            details.appendChild(answer);
-            listEl.appendChild(details);
-        });
+window.updateOrderInFirestore = async function() {
+    const listEl = document.getElementById('actuaryNotesList');
+    if (!listEl) return;
+    const cards = Array.from(listEl.querySelectorAll('.actuary-note-card'));
+    if (cards.length === 0) return;
+
+    const updates = cards.map((card, index) => {
+        const noteId = card.getAttribute('data-note-id');
+        return updateDoc(doc(db, 'actuary_notes', noteId), { order: index + 1 });
+    });
+
+    try {
+        await Promise.all(updates);
     } catch (error) {
-        console.error('Error loading questions', error);
-        listEl.innerHTML = '<div class="muted">Unable to load questions.</div>';
+        console.error('Error updating order', error);
     }
+};
+
+window.toggleMode = function(mode) {
+    const editor = document.getElementById('actuaryNoteEditor');
+    const readBtn = document.getElementById('actuaryReadModeBtn');
+    const editBtn = document.getElementById('actuaryEditModeBtn');
+    if (!editor) return;
+    actuaryState.mode = mode;
+    const isRead = mode === 'read';
+    editor.setAttribute('contenteditable', String(!isRead));
+    if (readBtn) readBtn.classList.toggle('active', isRead);
+    if (editBtn) editBtn.classList.toggle('active', !isRead);
 };
 
 window.loadLearnQuestions = async function(subjectOverride) {
@@ -2679,7 +2608,10 @@ window.loadLearnQuestions = async function(subjectOverride) {
         return;
     }
 
-    ensureLearnSubjectOptions();
+    if (subjectSelect.options.length === 0) {
+        subjectSelect.innerHTML = actuarySubjects.map(subject => `<option value="${subject}">${subject}</option>`).join('');
+    }
+
     const subject = subjectOverride || subjectSelect.value || actuarySubjects[0];
     subjectSelect.value = subject;
 
@@ -2776,6 +2708,30 @@ window.loadSessions = async function(){
         </div>
     </div>
 </div>
+
+<!-- Actuaries Notes Modal -->
+<div id="actuaryNoteModal" class="actuary-editor-modal">
+    <div class="actuary-editor-box">
+        <div class="actuary-editor-top">
+            <button class="submit-btn btn-muted btn-sm" onclick="closeActuaryNoteModal()">← Back</button>
+            <div class="actuary-editor-modes" id="actuaryModeButtons" style="display:none;">
+                <button class="submit-btn btn-muted btn-sm" id="actuaryReadModeBtn" onclick="toggleMode('read')">Read Mode</button>
+                <button class="submit-btn btn-sm" id="actuaryEditModeBtn" onclick="toggleMode('edit')">Edit Mode</button>
+            </div>
+        </div>
+        <div class="actuary-editor-row">
+            <label for="actuaryNoteTitle" style="font-weight:600;color:#233348;">Title</label>
+            <input id="actuaryNoteTitle" type="text" placeholder="Note title">
+        </div>
+        <div id="actuaryNoteEditor" class="actuary-editor-body" contenteditable="true"></div>
+        <div class="actuary-editor-footer">
+            <span class="muted" id="actuaryNotesStatus"></span>
+            <button class="submit-btn" onclick="saveNote()">Save Notes</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
 // --- Journal Global State ---
