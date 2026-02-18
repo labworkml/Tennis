@@ -77,6 +77,36 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .modal-actions{
+            display:flex;
+            gap:0.7rem;
+            justify-content:flex-end;
+        }
+        .filter-bar{
+            display:flex;
+            gap:0.8rem;
+            flex-wrap:wrap;
+            margin:0 0 1rem 0;
+        }
+        .filter-bar input,
+        .filter-bar select{
+            max-width:220px;
+        }
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            padding:0.2rem 0.55rem;
+            border-radius:999px;
+            font-size:0.75rem;
+            font-weight:600;
+            background:#eef2f7;
+            color:#3b4a5a;
+        }
+        .badge-accent{background:rgba(26,188,156,0.15);color:#0f766e;}
+        .badge-success{background:rgba(16,185,129,0.18);color:#047857;}
+        .badge-danger{background:rgba(239,68,68,0.18);color:#b91c1c;}
+        .badge-warning{background:rgba(245,158,11,0.2);color:#b45309;}
+        .badge-info{background:rgba(59,130,246,0.18);color:#1d4ed8;}
         #journalViewModal {
             display: none;
             position: fixed;
@@ -89,6 +119,33 @@
         #journalViewModal.active {
             display: flex;
         }
+        #calendarDetailModal{
+            display:none;
+            position:fixed;
+            top:0;left:0;width:100vw;height:100vh;
+            background: rgba(20, 28, 38, 0.55);
+            z-index: 115;
+            align-items:center;
+            justify-content:center;
+        }
+        #calendarDetailModal.active{display:flex;}
+        .calendar-detail-box{
+            background:white;
+            padding:1.6rem 1.8rem;
+            border-radius:16px;
+            box-shadow:0 16px 40px rgba(15,23,42,0.12);
+            width:90vw;
+            max-width:700px;
+            min-width:280px;
+            animation: journalModalPop 0.22s cubic-bezier(.4,1.4,.6,1) 1;
+            display:flex;
+            flex-direction:column;
+            gap:1rem;
+        }
+        .calendar-detail-section{padding:0.6rem 0;border-top:1px solid #eef4f8;}
+        .calendar-detail-section:first-of-type{border-top:none;padding-top:0;}
+        .calendar-detail-title{font-weight:600;color:#0f2540;margin-bottom:0.4rem;}
+        .calendar-detail-item{color:var(--muted);font-size:0.95rem;margin:0.2rem 0;}
         #historyEditModal {
             display: none;
             position: fixed;
@@ -126,6 +183,13 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+        }
+        .journal-modal-box,
+        .journal-view-box,
+        .history-edit-box,
+        .calendar-detail-box{
+            max-height:90vh;
+            overflow-y:auto;
         }
         @media (max-width: 700px) {
             .journal-modal-box { padding: 1.1rem 0.7rem; max-width: 99vw; }
@@ -272,8 +336,21 @@
                 border-radius:0;
                 padding:1.1rem 1rem;
             }
-            .history-edit-box{width:100vw;height:100vh;max-width:100vw;border-radius:0;padding:1.1rem 1rem}
+            .history-edit-box,
+            .calendar-detail-box{width:100vw;height:100vh;max-width:100vw;border-radius:0;padding:1.1rem 1rem}
             .session-modal-box{padding:1.2rem 1rem}
+            .modal-actions{
+                position:sticky;
+                bottom:0;
+                background: linear-gradient(180deg, rgba(255,255,255,0.7), #ffffff 60%);
+                padding:0.8rem 0;
+            }
+            .filter-bar input,
+            .filter-bar select{
+                flex:1;
+                min-width:140px;
+                max-width:none;
+            }
         }
 
         /* Session Modal Styles */
@@ -361,7 +438,7 @@
   font-size:0.95rem;
   background:#f1f5f9;
   color:#0f2540;
-  cursor:default;
+    cursor:pointer;
   transition:all 0.2s ease;
 }
 
@@ -516,6 +593,15 @@
         <!-- History Tab -->
         <div id="history" class="tab-content">
             <h1>Training History</h1>
+            <div class="filter-bar">
+                <input type="text" id="historySearchInput" placeholder="Search history..." oninput="applyHistoryFilters()">
+                <input type="date" id="historyDateFilter" onchange="applyHistoryFilters()">
+                <select id="historyTypeFilter" onchange="applyHistoryFilters()">
+                    <option value="all">All Types</option>
+                    <option value="sessions">Sessions</option>
+                    <option value="matches">Matches</option>
+                </select>
+            </div>
             
             <!-- Training Sessions Section -->
             <div style="margin-bottom:2rem;">
@@ -549,6 +635,15 @@
         <!-- Journal Tab -->
         <div id="journal" class="tab-content">
             <h1>Journal Entries</h1>
+            <div class="filter-bar">
+                <input type="text" id="journalSearchInput" placeholder="Search journals..." oninput="applyJournalFilters()">
+                <input type="date" id="journalDateFilter" onchange="applyJournalFilters()">
+                <select id="journalTypeFilter" onchange="applyJournalFilters()">
+                    <option value="all">All Types</option>
+                    <option value="session">Session</option>
+                    <option value="match">Match</option>
+                </select>
+            </div>
             <ul id="journalList" class="session-list"></ul>
         </div>
     </div>
@@ -583,9 +678,19 @@
                 <label for="historyEditDate">Date</label>
                 <input type="date" id="historyEditDate">
             </div>
-            <div style="display:flex;gap:0.7rem;justify-content:flex-end;">
+            <div class="modal-actions">
                 <button class="submit-btn" onclick="saveHistoryEdit()">Save</button>
                 <button class="submit-btn btn-muted" onclick="closeHistoryEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calendarDetailModal">
+        <div class="calendar-detail-box">
+            <h2 id="calendarDetailTitle">Date</h2>
+            <div id="calendarDetailContent"></div>
+            <div class="modal-actions">
+                <button class="submit-btn btn-muted" onclick="closeCalendarDetailModal()">Close</button>
             </div>
         </div>
     </div>
@@ -864,6 +969,15 @@
                 return;
             }
             window.firebaseClearMatchHistory();
+        }
+
+        function applyHistoryFilters() {
+            if (window.firebaseRenderHistoryList) window.firebaseRenderHistoryList();
+            if (window.firebaseRenderMatchHistory) window.firebaseRenderMatchHistory();
+        }
+
+        function applyJournalFilters() {
+            if (window.firebaseRenderJournalList) window.firebaseRenderJournalList();
         }
 
         // Authentication Functions
@@ -1209,6 +1323,15 @@ window.firebaseRenderHistoryList = async function() {
     const listEl = document.getElementById('historyList');
     if (!listEl) return;
 
+    const typeFilter = (document.getElementById('historyTypeFilter')?.value || 'all');
+    const dateFilter = document.getElementById('historyDateFilter')?.value || '';
+    const searchQuery = (document.getElementById('historySearchInput')?.value || '').trim().toLowerCase();
+
+    if (typeFilter === 'matches') {
+        listEl.innerHTML = '<li style="color:#666;padding:1rem;">Filtered to match records.</li>';
+        return;
+    }
+
     const q = query(collection(db, 'history'), where("userId", "==", currentUserId));
     const snapshot = await getDocs(q);
 
@@ -1221,11 +1344,14 @@ window.firebaseRenderHistoryList = async function() {
         await fetchJournalsForUser();
         snapshot.forEach(docSnap => {
                 const h = docSnap.data();
+                if (dateFilter && h.date !== dateFilter) return;
                 const completionPercentage = h.totalItems > 0 ? Math.round((h.completedItemsCount / h.totalItems) * 100) : 0;
                 const finishedDate = new Date(h.finishedAtTimestamp).toLocaleString();
                 const items = (h.items || [])
                         .map(it => `<div>${it.type}: ${it.exercise} — ${it.minutes} min</div>`)
                         .join('');
+                const combinedText = `${h.date} ${items}`.toLowerCase();
+                if (searchQuery && !combinedText.includes(searchQuery)) return;
                 const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
                 const journalBtn = `<button class='submit-btn btn-secondary btn-sm' style='margin-top:0.5rem;' onclick='openJournalForRecord("session", "${docSnap.id}", "${h.date}")'>${journalBtnText}</button>`;
                 const editBtn = `<button class='submit-btn btn-sm' onclick='editHistorySession("${docSnap.id}")'>Edit</button>`;
@@ -1235,7 +1361,7 @@ window.firebaseRenderHistoryList = async function() {
             <div style="display:flex;justify-content:space-between;align-items:center">
                 <div>
                     <strong>${h.date}</strong>
-                    <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items (${completionPercentage}%)</p>
+                    <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items <span class="badge badge-accent">${completionPercentage}%</span></p>
                     <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${finishedDate}</p>
                     ${journalBtn}
                 </div>
@@ -1248,7 +1374,7 @@ window.firebaseRenderHistoryList = async function() {
         </li>
 `;
         });
-        listEl.innerHTML = html;
+        listEl.innerHTML = html || '<li style="color:#666;padding:1rem;">No sessions match the filters.</li>';
 };
 
 window.firebaseSaveMatchRecord = async function(matchData) {
@@ -1294,6 +1420,15 @@ window.firebaseRenderMatchHistory = async function() {
     const listEl = document.getElementById('matchHistoryList');
     if (!listEl) return;
 
+        const typeFilter = (document.getElementById('historyTypeFilter')?.value || 'all');
+        const dateFilter = document.getElementById('historyDateFilter')?.value || '';
+        const searchQuery = (document.getElementById('historySearchInput')?.value || '').trim().toLowerCase();
+
+        if (typeFilter === 'sessions') {
+                listEl.innerHTML = '<li style="color:#666;padding:1rem;">Filtered to training sessions.</li>';
+                return;
+        }
+
     const q = query(collection(db, 'matches'), where("userId", "==", currentUserId));
     const snapshot = await getDocs(q);
 
@@ -1308,7 +1443,10 @@ window.firebaseRenderMatchHistory = async function() {
         snapshot.forEach(docSnap => {
             const m = docSnap.data();
             const savedDate = new Date(m.savedAtTimestamp).toLocaleString();
-            const resultColor = m.result === 'Win' ? '#10b981' : m.result === 'Loss' ? '#ef4444' : '#f59e0b';
+                        if (dateFilter && m.date !== dateFilter) return;
+                        const resultBadgeClass = m.result === 'Win' ? 'badge-success' : m.result === 'Loss' ? 'badge-danger' : 'badge-warning';
+                        const combinedText = `${m.date} ${m.opponent} ${m.score} ${m.result}`.toLowerCase();
+                        if (searchQuery && !combinedText.includes(searchQuery)) return;
             const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
             const journalBtn = `<button class='submit-btn btn-secondary btn-sm' style='margin-top:0.5rem;' onclick='openJournalForRecord("match", "${docSnap.id}", "${m.date}")'>${journalBtnText}</button>`;
             const editBtn = `<button class='submit-btn btn-sm' onclick='editMatchRecord("${docSnap.id}")'>Edit</button>`;
@@ -1319,7 +1457,7 @@ window.firebaseRenderMatchHistory = async function() {
             <div style="flex:1;">
               <strong>${m.date}</strong> vs <strong>${m.opponent}</strong>
               <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Score: ${m.score}</p>
-              <p style="color:${resultColor};font-size:0.9rem;font-weight:600;margin:0.3rem 0 0 0;">${m.result}</p>
+                            <div style="margin:0.3rem 0 0 0;"><span class="badge ${resultBadgeClass}">${m.result}</span></div>
               <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${savedDate}</p>
               ${journalBtn}
             </div>
@@ -1331,7 +1469,7 @@ window.firebaseRenderMatchHistory = async function() {
         </li>
     `;
         });
-        listEl.innerHTML = html;
+                listEl.innerHTML = html || '<li style="color:#666;padding:1rem;">No matches match the filters.</li>';
 };
 
 window.deleteJournalsForRecord = async function(recordId) {
@@ -1507,7 +1645,7 @@ window.loadSessions = async function(){
             <button class="submit-btn" id="startDictationBtn" style="background:#3b82f6;" onclick="startDictation()">Start Dictation</button>
             <span id="dictationStatus" style="color:#3b82f6;font-weight:600;font-size:0.9rem;display:none;">Listening...</span>
         </div>
-        <div style="display:flex;gap:0.7rem;">
+            <div class="modal-actions">
             <button class="submit-btn" id="saveJournalBtn" onclick="saveJournalEntry()">Save</button>
             <button class="submit-btn" style="background:#67748a;" onclick="closeJournalEntryModal()">Cancel</button>
         </div>
@@ -1518,7 +1656,7 @@ window.loadSessions = async function(){
     <div class="journal-view-box">
         <h2 id="journalViewTitle">Journal Entry</h2>
         <div id="journalViewText" style="white-space:pre-line;color:#0f2540;font-size:1.02rem;"></div>
-        <div style="display:flex;gap:0.7rem;justify-content:flex-end;">
+        <div class="modal-actions">
             <button class="submit-btn" id="journalViewEditBtn" onclick="editJournalFromView()">Edit</button>
             <button class="submit-btn" style="background:#67748a;" onclick="closeJournalViewModal()">Close</button>
         </div>
@@ -1724,7 +1862,10 @@ window.firebaseRenderJournalList = async function() {
             return;
         }
         
-        // Convert snapshot docs to array
+        const typeFilter = (document.getElementById('journalTypeFilter')?.value || 'all');
+        const dateFilter = document.getElementById('journalDateFilter')?.value || '';
+        const searchQuery = (document.getElementById('journalSearchInput')?.value || '').trim().toLowerCase();
+
         const journalArray = snapshot.docs.map(docSnap => ({
             ...docSnap.data(),
             docId: docSnap.id
@@ -1734,7 +1875,20 @@ window.firebaseRenderJournalList = async function() {
         journalArray.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
         let html = '';
-        journalArray.forEach(j => {
+        const filteredArray = journalArray.filter(j => {
+            if (typeFilter !== 'all' && j.type !== typeFilter) return false;
+            if (dateFilter && j.date !== dateFilter) return false;
+            const combinedText = `${j.date} ${j.text || ''}`.toLowerCase();
+            if (searchQuery && !combinedText.includes(searchQuery)) return false;
+            return true;
+        });
+
+        if (filteredArray.length === 0) {
+            listEl.innerHTML = '<li style="color:#666;padding:1.5rem;text-align:center;">No journal entries match the filters.</li>';
+            return;
+        }
+
+        filteredArray.forEach(j => {
             const typeColor = j.type === 'session' ? '#ef4444' : '#3b82f6';
                         const encodedText = encodeURIComponent(j.text || '');
             html += `<li>
@@ -1753,7 +1907,7 @@ window.firebaseRenderJournalList = async function() {
 </script>
 
 <script>
-let calTrainDates={}, calMatchDates={};
+let calTrainDates={}, calMatchDates={}, calTrainDetails={}, calMatchDetails={};
 
 function initCalendar(){
     const m=document.getElementById("calMonth");
@@ -1797,6 +1951,8 @@ async function loadCalendarData(){
     try {
         calTrainDates={}; 
         calMatchDates={};
+        calTrainDetails={};
+        calMatchDetails={};
         
         if(!currentUserId) {
             console.log('No user logged in');
@@ -1806,18 +1962,24 @@ async function loadCalendarData(){
         
         const hSnap=await getDocs(query(collection(db,"history"), where("userId","==",currentUserId)));
         hSnap.forEach(d=> {
-            const dateStr = d.data().date;
+            const h = d.data();
+            const dateStr = h.date;
             if(dateStr) {
                 calTrainDates[dateStr]=true;
+                if (!calTrainDetails[dateStr]) calTrainDetails[dateStr]=[];
+                calTrainDetails[dateStr].push(h);
                 console.log('Training date:', dateStr);
             }
         });
         
         const mSnap=await getDocs(query(collection(db,"matches"), where("userId","==",currentUserId)));
         mSnap.forEach(d=> {
-            const dateStr = d.data().date;
+            const m = d.data();
+            const dateStr = m.date;
             if(dateStr) {
                 calMatchDates[dateStr]=true;
+                if (!calMatchDetails[dateStr]) calMatchDetails[dateStr]=[];
+                calMatchDetails[dateStr].push(m);
                 console.log('Match date:', dateStr);
             }
         });
@@ -1893,6 +2055,7 @@ function renderCalendar(){
         }
         
         cell.textContent=d;
+        cell.addEventListener('click', () => openCalendarDetail(key));
         row.appendChild(cell);
         
         if((start+d)%7===0){ 
@@ -1906,6 +2069,47 @@ function renderCalendar(){
     if(row.children.length > 0) grid.appendChild(row);
     
     console.log('Calendar rendered for', month, year);
+}
+
+function openCalendarDetail(dateStr) {
+    const modal = document.getElementById('calendarDetailModal');
+    const title = document.getElementById('calendarDetailTitle');
+    const content = document.getElementById('calendarDetailContent');
+    if (!modal || !title || !content) return;
+    title.textContent = dateStr;
+    const sessions = calTrainDetails[dateStr] || [];
+    const matches = calMatchDetails[dateStr] || [];
+    let html = '';
+
+    if (sessions.length === 0 && matches.length === 0) {
+        html = '<p class="muted">No sessions or matches for this date.</p>';
+    }
+
+    if (sessions.length > 0) {
+        html += '<div class="calendar-detail-section"><div class="calendar-detail-title">Training Sessions</div>';
+        sessions.forEach(s => {
+            const itemsText = (s.items || []).map(it => `${it.type}: ${it.exercise} — ${it.minutes} min`).join(' | ');
+            html += `<div class="calendar-detail-item">${itemsText || 'Session completed'}</div>`;
+        });
+        html += '</div>';
+    }
+
+    if (matches.length > 0) {
+        html += '<div class="calendar-detail-section"><div class="calendar-detail-title">Matches</div>';
+        matches.forEach(m => {
+            const resultBadgeClass = m.result === 'Win' ? 'badge-success' : m.result === 'Loss' ? 'badge-danger' : 'badge-warning';
+            html += `<div class="calendar-detail-item">${m.opponent} — ${m.score} <span class="badge ${resultBadgeClass}">${m.result}</span></div>`;
+        });
+        html += '</div>';
+    }
+
+    content.innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeCalendarDetailModal() {
+    const modal = document.getElementById('calendarDetailModal');
+    if (modal) modal.classList.remove('active');
 }
 </script>
 
