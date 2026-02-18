@@ -581,6 +581,59 @@
             background: #ffe066;
             box-shadow: 0 0 0 2px rgba(255, 224, 102, 0.35);
         }
+
+        /* Learn Modal */
+        .learn-modal-overlay{
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.4);
+            backdrop-filter:blur(6px);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            z-index:999;
+        }
+        .learn-modal{
+            width:700px;
+            max-width:90%;
+            background:#ffffff;
+            border-radius:16px;
+            padding:28px;
+            box-shadow:0 24px 60px rgba(15,23,42,0.25);
+            position:relative;
+        }
+        .learn-modal-close{
+            position:absolute;
+            top:16px;
+            right:16px;
+            width:36px;
+            height:36px;
+            border:none;
+            border-radius:999px;
+            background:#f3f4f6;
+            color:#374151;
+            font-size:20px;
+            cursor:pointer;
+        }
+        .learn-modal-header{
+            font-weight:600;
+            color:#0f2540;
+            margin-bottom:14px;
+        }
+        .learn-modal label{display:block;margin:12px 0 6px;font-weight:600;color:#374151}
+        .learn-modal textarea{
+            width:100%;
+            min-height:90px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            padding:10px 12px;
+            font-size:15px;
+            line-height:1.6;
+            resize:vertical;
+        }
+        .learn-modal .answer-section{display:none;margin-top:8px}
+        .learn-modal-footer{display:flex;gap:0.6rem;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap}
+        .learn-modal-actions{display:flex;gap:0.6rem;flex-wrap:wrap}
         
         .actuary-editor-footer{
             display:flex;
@@ -2831,6 +2884,8 @@ document.addEventListener('mousedown', function(e) {
 
 // Click on highlight to show question
 let currentHighlightElement = null;
+let currentLearnId = null;
+let currentLearnSubject = 'SP1';
 
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('note-highlight')) {
@@ -2841,6 +2896,16 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+
+window.getSelectedHtml = function() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return '';
+    
+    const container = document.createElement('div');
+    container.appendChild(selection.getRangeAt(0).cloneContents());
+    
+    return container.innerHTML;
+};
 
 window.showHighlightQuestion = function(question) {
     const modal = document.getElementById('highlightQuestionModal');
@@ -2857,11 +2922,24 @@ window.closeHighlightModal = function() {
     currentHighlightElement = null;
 };
 
+window.deleteQuestion = async function() {
+    if (!currentHighlightElement) return;
+    if (!confirm('Delete this question?')) return;
+
+    try {
+        const textNode = document.createTextNode(currentHighlightElement.textContent || '');
+        currentHighlightElement.replaceWith(textNode);
+        await saveHighlightsToFirestore();
+        window.closeHighlightModal();
+    } catch (error) {
+        console.error('Error deleting highlight:', error);
+        alert('Error deleting highlight: ' + error.message);
+    }
+};
+
 window.addHighlightToLearn = async function() {
     const question = document.getElementById('highlightQuestionText')?.textContent;
     if (!question || !currentHighlightElement) return;
-    
-    const highlightText = currentHighlightElement.innerText;
     
     if (!currentUserId || !actuaryState.noteId) {
         alert('Please sign in and open a note first.');
@@ -2869,16 +2947,18 @@ window.addHighlightToLearn = async function() {
     }
     
     try {
-        await addDoc(collection(db, 'actuary_questions'), {
+        const answerText = currentHighlightElement.textContent || '';
+
+        await addDoc(collection(db, 'actuary_cards'), {
             userId: currentUserId,
             noteId: actuaryState.noteId,
             subject: actuaryState.subject,
             question: question,
-            answer: highlightText,
+            answer: answerText,
             createdAt: Date.now()
         });
         
-        alert('✅ Added to Learn tab!');
+        alert('✅ Added to Learn cards!');
         window.closeHighlightModal();
     } catch (error) {
         console.error('Error adding to learn tab:', error);
@@ -3022,60 +3102,329 @@ window.loadLearnQuestions = async function(subjectOverride) {
 
     const subject = subjectOverride || subjectSelect.value || actuarySubjects[0];
     subjectSelect.value = subject;
+    currentLearnSubject = subject;
 
     try {
-        const notesSnap = await getDocs(query(
-            collection(db, 'actuary_notes'),
+        const learnSnap = await getDocs(query(
+            collection(db, 'actuary_learn'),
             where('userId', '==', currentUserId),
-            where('subject', '==', subject)
-        ));
-        const noteIds = notesSnap.docs.map(docSnap => docSnap.id);
-        if (noteIds.length === 0) {
-            listEl.innerHTML = '<div class="muted">No questions yet for this subject.</div>';
-            return;
-        }
-
-        const questionsSnap = await getDocs(query(
-            collection(db, 'actuary_questions'),
-            where('userId', '==', currentUserId),
+            where('subject', '==', subject),
             orderBy('createdAt', 'desc')
         ));
-        const questions = questionsSnap.docs
-            .map(docSnap => docSnap.data())
-            .filter(item => noteIds.includes(item.noteId));
 
-        if (questions.length === 0) {
-            listEl.innerHTML = '<div class="muted">No questions yet for this subject.</div>';
+        if (learnSnap.empty) {
+            listEl.innerHTML = '<div class="muted">No learn items yet for this subject.</div>';
             return;
         }
 
         listEl.innerHTML = '';
-        questions.forEach(data => {
+        learnSnap.forEach((docSnap) => {
+            const data = docSnap.data();
             const card = document.createElement('div');
             card.className = 'actuary-learn-card';
+            
             const title = document.createElement('h4');
             title.textContent = data.question || 'Question';
+            
             const answer = document.createElement('div');
             answer.className = 'actuary-learn-answer';
-            answer.textContent = data.answer || '';
-            const btn = document.createElement('button');
-            btn.className = 'submit-btn btn-sm';
-            btn.textContent = 'Show Answer';
-            btn.addEventListener('click', () => {
+            answer.innerHTML = data.extractHtml || '';
+            answer.style.display = 'none';
+            
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
+            
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'submit-btn btn-sm';
+            toggleBtn.textContent = 'Show Answer';
+            toggleBtn.addEventListener('click', () => {
                 const isVisible = answer.style.display === 'block';
                 answer.style.display = isVisible ? 'none' : 'block';
-                btn.textContent = isVisible ? 'Show Answer' : 'Hide Answer';
+                toggleBtn.textContent = isVisible ? 'Show Answer' : 'Hide Answer';
             });
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'submit-btn btn-sm';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => {
+                openLearnEditor(docSnap.id, data);
+            });
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'submit-btn btn-danger btn-sm';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => {
+                deleteLearnItem(docSnap.id);
+            });
+            
+            btnContainer.appendChild(toggleBtn);
+            btnContainer.appendChild(editBtn);
+            btnContainer.appendChild(deleteBtn);
+            
             card.appendChild(title);
-            card.appendChild(btn);
+            card.appendChild(btnContainer);
             card.appendChild(answer);
             listEl.appendChild(card);
         });
     } catch (error) {
-        console.error('Error loading learn questions', error);
+        console.error('Error loading learn questions:', error);
         listEl.innerHTML = '<div class="muted">Unable to load questions.</div>';
     }
 };
+
+window.openLearnEditor = function(learnId, data) {
+    currentLearnId = learnId;
+    const modal = document.getElementById('learnEditorModal');
+    const questionInput = document.getElementById('learnQuestionInput');
+    const extractEditor = document.getElementById('learnExtractEditor');
+    
+    if (modal && questionInput && extractEditor) {
+        questionInput.value = data.question || '';
+        extractEditor.innerHTML = data.extractHtml || '';
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeLearnEditor = function() {
+    const modal = document.getElementById('learnEditorModal');
+    if (modal) modal.style.display = 'none';
+    currentLearnId = null;
+};
+
+window.saveLearnEdit = async function() {
+    if (!currentLearnId) return;
+    
+    const question = document.getElementById('learnQuestionInput').value.trim();
+    const extractHtml = document.getElementById('learnExtractEditor').innerHTML.trim();
+    
+    if (!question) {
+        alert('Please enter a question');
+        return;
+    }
+    
+    try {
+        await updateDoc(doc(db, 'actuary_learn', currentLearnId), {
+            question: question,
+            extractHtml: extractHtml,
+            updatedAt: Date.now()
+        });
+        
+        closeLearnEditor();
+        await loadLearnQuestions(currentLearnSubject);
+        alert('✅ Saved successfully!');
+    } catch (error) {
+        console.error('Error saving learn item:', error);
+        alert('Error saving: ' + error.message);
+    }
+};
+
+window.deleteCurrentLearn = async function() {
+    if (!currentLearnId) return;
+    
+    if (!confirm('Delete this learn item?')) return;
+    
+    try {
+        await deleteDoc(doc(db, 'actuary_learn', currentLearnId));
+        closeLearnEditor();
+        await loadLearnQuestions(currentLearnSubject);
+    } catch (error) {
+        console.error('Error deleting learn item:', error);
+        alert('Error deleting: ' + error.message);
+    }
+};
+
+window.deleteLearnItem = async function(learnId) {
+    if (!learnId) return;
+    
+    if (!confirm('Delete this learn item?')) return;
+    
+    try {
+        await deleteDoc(doc(db, 'actuary_learn', learnId));
+        await loadLearnQuestions(currentLearnSubject);
+    } catch (error) {
+        console.error('Error deleting learn item:', error);
+        alert('Error deleting: ' + error.message);
+    }
+};
+
+let learnModalOpen = false;
+let cardsArray = [];
+let currentCardIndex = 0;
+
+function setCardControlsDisabled(disabled) {
+    const editBtn = document.getElementById('editCardBtn');
+    const saveBtn = document.getElementById('saveCardBtn');
+    const toggleBtn = document.getElementById('toggleAnswerBtn');
+    const prevBtn = document.querySelector('#learnModal .learn-modal-footer button[onclick="prevCard()"]');
+    const nextBtn = document.querySelector('#learnModal .learn-modal-footer button[onclick="nextCard()"]');
+
+    [editBtn, saveBtn, toggleBtn, prevBtn, nextBtn].forEach(btn => {
+        if (btn) btn.disabled = !!disabled;
+    });
+}
+
+window.openLearnModal = async function() {
+    if (!currentUserId || !actuaryState.noteId) {
+        alert('Please sign in and open a note first.');
+        return;
+    }
+    const modal = document.getElementById('learnModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    learnModalOpen = true;
+    await loadCardsForNote();
+};
+
+window.closeLearnModal = function() {
+    const modal = document.getElementById('learnModal');
+    if (modal) modal.style.display = 'none';
+    learnModalOpen = false;
+};
+
+window.loadCardsForNote = async function() {
+    const statusEl = document.getElementById('learnStatus');
+    if (statusEl) statusEl.textContent = 'Loading...';
+
+    try {
+        const q = query(
+            collection(db, 'actuary_cards'),
+            where('userId', '==', currentUserId),
+            where('noteId', '==', actuaryState.noteId)
+        );
+        const snapshot = await getDocs(q);
+        cardsArray = snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        }));
+        currentCardIndex = 0;
+        renderCard();
+        if (statusEl) statusEl.textContent = '';
+    } catch (error) {
+        console.error('Error loading cards:', error);
+        if (statusEl) statusEl.textContent = 'Failed to load cards.';
+    }
+};
+
+window.renderCard = function() {
+    const counterEl = document.getElementById('cardCounter');
+    const questionEl = document.getElementById('cardQuestion');
+    const answerEl = document.getElementById('cardAnswer');
+    const answerSection = document.getElementById('answerSection');
+    const toggleBtn = document.getElementById('toggleAnswerBtn');
+    const editBtn = document.getElementById('editCardBtn');
+    const saveBtn = document.getElementById('saveCardBtn');
+
+    if (!counterEl || !questionEl || !answerEl || !answerSection) return;
+
+    if (!cardsArray.length) {
+        counterEl.textContent = 'Card 0 of 0';
+        questionEl.value = 'No cards yet for this note.';
+        answerEl.value = '';
+        answerSection.style.display = 'none';
+        if (toggleBtn) toggleBtn.textContent = 'Show Answer';
+        if (editBtn) editBtn.style.display = 'inline-block';
+        if (saveBtn) saveBtn.style.display = 'none';
+        questionEl.readOnly = true;
+        answerEl.readOnly = true;
+        setCardControlsDisabled(true);
+        return;
+    }
+
+    const card = cardsArray[currentCardIndex];
+    counterEl.textContent = `Card ${currentCardIndex + 1} of ${cardsArray.length}`;
+    questionEl.value = card.question || '';
+    answerEl.value = card.answer || '';
+    questionEl.readOnly = true;
+    answerEl.readOnly = true;
+    answerSection.style.display = 'none';
+    if (toggleBtn) toggleBtn.textContent = 'Show Answer';
+    if (editBtn) editBtn.style.display = 'inline-block';
+    if (saveBtn) saveBtn.style.display = 'none';
+    setCardControlsDisabled(false);
+};
+
+window.toggleAnswer = function() {
+    const answerSection = document.getElementById('answerSection');
+    const toggleBtn = document.getElementById('toggleAnswerBtn');
+    if (!answerSection || !toggleBtn) return;
+    const isVisible = answerSection.style.display === 'block';
+    answerSection.style.display = isVisible ? 'none' : 'block';
+    toggleBtn.textContent = isVisible ? 'Show Answer' : 'Hide Answer';
+};
+
+window.nextCard = function() {
+    if (currentCardIndex < cardsArray.length - 1) {
+        currentCardIndex += 1;
+        renderCard();
+    }
+};
+
+window.prevCard = function() {
+    if (currentCardIndex > 0) {
+        currentCardIndex -= 1;
+        renderCard();
+    }
+};
+
+window.enableCardEdit = function() {
+    const questionEl = document.getElementById('cardQuestion');
+    const answerEl = document.getElementById('cardAnswer');
+    const saveBtn = document.getElementById('saveCardBtn');
+    const editBtn = document.getElementById('editCardBtn');
+    if (!questionEl || !answerEl) return;
+
+    questionEl.readOnly = false;
+    answerEl.readOnly = false;
+    if (saveBtn) saveBtn.style.display = 'inline-block';
+    if (editBtn) editBtn.style.display = 'none';
+};
+
+window.saveCardEdit = async function() {
+    const card = cardsArray[currentCardIndex];
+    if (!card) return;
+
+    const questionEl = document.getElementById('cardQuestion');
+    const answerEl = document.getElementById('cardAnswer');
+    const saveBtn = document.getElementById('saveCardBtn');
+    const editBtn = document.getElementById('editCardBtn');
+    const statusEl = document.getElementById('learnStatus');
+
+    try {
+        await updateDoc(doc(db, 'actuary_cards', card.id), {
+            question: questionEl.value.trim(),
+            answer: answerEl.value.trim()
+        });
+        cardsArray[currentCardIndex] = {
+            ...card,
+            question: questionEl.value.trim(),
+            answer: answerEl.value.trim()
+        };
+        questionEl.readOnly = true;
+        answerEl.readOnly = true;
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'inline-block';
+        if (statusEl) statusEl.textContent = 'Saved.';
+    } catch (error) {
+        console.error('Error updating card:', error);
+        if (statusEl) statusEl.textContent = 'Save failed.';
+    }
+};
+
+document.addEventListener('keydown', (e) => {
+    if (!learnModalOpen) return;
+    const activeTag = document.activeElement?.tagName || '';
+    const isEditable = ['INPUT', 'TEXTAREA'].includes(activeTag) && !document.activeElement.readOnly;
+    if (isEditable) return;
+
+    if (e.key === 'ArrowRight') {
+        nextCard();
+    } else if (e.key === 'ArrowLeft') {
+        prevCard();
+    } else if (e.code === 'Space') {
+        e.preventDefault();
+        toggleAnswer();
+    }
+});
 
 // TEST FUNCTIONS
 window.saveSession = async function(session){
@@ -3125,6 +3474,7 @@ window.loadSessions = async function(){
             <div class="actuary-editor-modes" id="actuaryModeButtons" style="display:none;">
                 <button class="submit-btn btn-muted btn-sm" id="actuaryReadModeBtn" onclick="toggleMode('read')">👁️ Read</button>
                 <button class="submit-btn btn-sm" id="actuaryEditModeBtn" onclick="toggleMode('edit')">✏️ Edit</button>
+                <button class="submit-btn btn-sm" onclick="openLearnModal()">📚 Learn</button>
                 <div class="actuary-font-controls">
                     <button onclick="adjustFontSize(-1)" title="Decrease font size">A-</button>
                     <button onclick="adjustFontSize(1)" title="Increase font size">A+</button>
@@ -3199,6 +3549,86 @@ window.loadSessions = async function(){
             <div style="display:flex;gap:0.6rem;justify-content:flex-end;">
                 <button class="submit-btn btn-muted btn-sm" onclick="closeHighlightModal()">Close</button>
                 <button class="submit-btn btn-sm" onclick="addHighlightToLearn()">📚 Add to Learn Tab</button>
+                <button class="submit-btn btn-danger btn-sm" onclick="deleteQuestion()">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Learn Extract Editor Modal -->
+    <div id="learnEditorModal" style="
+        position:fixed;
+        display:none;
+        inset:0;
+        background:rgba(20, 28, 38, 0.45);
+        backdrop-filter:blur(8px);
+        z-index:999;
+        align-items:center;
+        justify-content:center;
+    ">
+        <div style="
+            background:white;
+            padding:1.5rem 2rem;
+            border-radius:12px;
+            box-shadow:0 20px 50px rgba(0,0,0,0.2);
+            max-width:600px;
+            width:90%;
+            max-height:80vh;
+            overflow-y:auto;
+        ">
+            <h3 style="margin:0 0 0.5rem 0;color:#0f2540;font-size:18px;">📝 Edit Learn Extract</h3>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:0.3rem;color:#374151;font-weight:500;font-size:14px;">Question</label>
+                <input id="learnQuestionInput" type="text" placeholder="Enter question..." style="
+                    width:100%;
+                    padding:0.6rem;
+                    border:1px solid #d1d5db;
+                    border-radius:6px;
+                    font-size:15px;
+                ">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;margin-bottom:0.3rem;color:#374151;font-weight:500;font-size:14px;">Extract Content</label>
+                <div id="learnExtractEditor" contenteditable="true" style="
+                    min-height:150px;
+                    padding:0.8rem;
+                    border:1px solid #d1d5db;
+                    border-radius:6px;
+                    background:#fafbfc;
+                    font-size:15px;
+                    line-height:1.6;
+                    outline:none;
+                "></div>
+            </div>
+            <div style="display:flex;gap:0.6rem;justify-content:flex-end;">
+                <button class="submit-btn btn-muted btn-sm" onclick="closeLearnEditor()">Cancel</button>
+                <button class="submit-btn btn-danger btn-sm" onclick="deleteCurrentLearn()">Delete</button>
+                <button class="submit-btn btn-sm" onclick="saveLearnEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learn Card Reviewer Modal -->
+    <div id="learnModal" class="learn-modal-overlay">
+        <div class="learn-modal">
+            <button class="learn-modal-close" onclick="closeLearnModal()">✕</button>
+            <div class="learn-modal-header" id="cardCounter">Card 0 of 0</div>
+            <label for="cardQuestion">Question</label>
+            <textarea id="cardQuestion" readonly></textarea>
+            <div class="learn-modal-actions" style="margin-top:12px;">
+                <button class="submit-btn btn-sm" id="toggleAnswerBtn" onclick="toggleAnswer()">Show Answer</button>
+            </div>
+            <div id="answerSection" class="answer-section">
+                <label for="cardAnswer">Answer</label>
+                <textarea id="cardAnswer" readonly></textarea>
+            </div>
+            <div class="learn-modal-footer">
+                <div class="learn-modal-actions">
+                    <button class="submit-btn btn-sm" onclick="prevCard()">Previous</button>
+                    <button class="submit-btn btn-sm" id="editCardBtn" onclick="enableCardEdit()">Edit</button>
+                    <button class="submit-btn btn-sm" id="saveCardBtn" onclick="saveCardEdit()" style="display:none;">Save</button>
+                    <button class="submit-btn btn-sm" onclick="nextCard()">Next</button>
+                </div>
+                <div class="muted" id="learnStatus" style="min-width:140px;text-align:right;"></div>
             </div>
         </div>
     </div>
