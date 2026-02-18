@@ -1173,6 +1173,10 @@ window.loadSessions = async function(){
     <div id="journalModalBox" class="journal-modal-box">
         <h2 id="journalModalTitle">Journal Entry</h2>
         <textarea id="journalEntryTextarea" placeholder="Write your thoughts..."></textarea>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+            <button class="submit-btn" id="startDictationBtn" style="background:#3b82f6;" onclick="startDictation()">Start Dictation</button>
+            <span id="dictationStatus" style="color:#3b82f6;font-weight:600;font-size:0.9rem;display:none;">Listening...</span>
+        </div>
         <div>
             <label style="display:block;margin-bottom:0.5rem;color:#233348;font-weight:600;font-size:.95rem">Voice Note (optional)</label>
             <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
@@ -1204,6 +1208,8 @@ let recordingChunks = [];
 let recordingStartTime = null;
 let recordingTimerInterval = null;
 let currentVoiceBlob = null;
+let dictationRecognition = null;
+let isDictating = false;
 
 // --- Modal UI Functions ---
 function openJournalForRecord(type, recordId, date) {
@@ -1245,6 +1251,68 @@ function closeJournalEntryModal() {
     currentJournalContext = null;
     currentJournalDocId = null;
     clearVoiceRecording();
+    stopDictation();
+}
+
+function getSpeechRecognition() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition;
+}
+
+function startDictation() {
+    const RecognitionConstructor = getSpeechRecognition();
+    const statusEl = document.getElementById('dictationStatus');
+    const textarea = document.getElementById('journalEntryTextarea');
+    if (!RecognitionConstructor) {
+        alert('Dictation is not supported in this browser.');
+        return;
+    }
+    if (isDictating) {
+        return;
+    }
+    dictationRecognition = new RecognitionConstructor();
+    dictationRecognition.continuous = false;
+    dictationRecognition.interimResults = false;
+    dictationRecognition.maxAlternatives = 1;
+    dictationRecognition.lang = navigator.language || 'en-US';
+    isDictating = true;
+    statusEl.style.display = 'inline';
+
+    dictationRecognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join(' ')
+            .trim();
+        if (transcript) {
+            const separator = textarea.value && !textarea.value.endsWith(' ') ? ' ' : '';
+            textarea.value = `${textarea.value}${separator}${transcript}`;
+        }
+        dictationRecognition.stop();
+    };
+
+    dictationRecognition.onerror = (event) => {
+        console.error('Dictation error', event);
+        alert('Dictation error: ' + event.error);
+    };
+
+    dictationRecognition.onend = () => {
+        isDictating = false;
+        statusEl.style.display = 'none';
+    };
+
+    try {
+        dictationRecognition.start();
+    } catch (error) {
+        console.error('Dictation start failed', error);
+        alert('Unable to start dictation.');
+        isDictating = false;
+        statusEl.style.display = 'none';
+    }
+}
+
+function stopDictation() {
+    if (dictationRecognition && isDictating) {
+        dictationRecognition.stop();
+    }
 }
 
 // --- Voice Recording Functions ---
@@ -1318,10 +1386,11 @@ async function saveJournalEntry() {
     if (currentVoiceBlob) {
         try {
             const fileName = `journals/${currentUserId}/${recordId}_${Date.now()}.webm`;
-            const fileRef = ref(storage, fileName);
-            await uploadBytes(fileRef, currentVoiceBlob);
-            voiceUrl = await getDownloadURL(fileRef);
+            const fileRef = window.ref(storage, fileName);
+            await window.uploadBytes(fileRef, currentVoiceBlob);
+            voiceUrl = await window.getDownloadURL(fileRef);
         } catch (error) {
+            console.error('Voice upload failed', error);
             alert('Error uploading voice: ' + error.message);
             return;
         }
