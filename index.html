@@ -473,8 +473,8 @@
             <div id="signInForm">
                 <h2 style="font-size:1.3rem;color:#0f2540;margin-bottom:1.5rem;">Sign In</h2>
                 <div class="form-group">
-                    <label for="signInEmail">Username:</label>
-                    <input type="text" id="signInEmail" placeholder="Enter username">
+                    <label for="signInEmail">Email:</label>
+                    <input type="text" id="signInEmail" placeholder="Enter your email">
                 </div>
                 <div class="form-group">
                     <label for="signInPassword">Password:</label>
@@ -986,26 +986,14 @@
         let currentMatchEditId = null;
         let currentHistoryEditId = null;
 
-        // Predefined users with passwords
-        const demoUsers = {
-            'user1': { password: 'password1', userId: 'user1', username: 'User 1' },
-            'user2': { password: 'password2', userId: 'user2', username: 'User 2' },
-            'user3': { password: 'password3', userId: 'user3', username: 'User 3' }
-        };
-
         function handleSignIn() {
-            const username = document.getElementById('signInEmail').value.trim();
+            const email = document.getElementById('signInEmail').value.trim();
             const password = document.getElementById('signInPassword').value.trim();
 
-            if (!username) { alert('Please enter username'); return; }
+            if (!email) { alert('Please enter email'); return; }
             if (!password) { alert('Please enter password'); return; }
 
-            // Check credentials
-            if (demoUsers[username] && demoUsers[username].password === password) {
-                window.firebaseSignIn(username, password);
-            } else {
-                alert('Invalid username or password');
-            }
+            window.firebaseSignIn(email, password);
         }
 
         function handleLogout() {
@@ -1066,46 +1054,43 @@ window.getDownloadURL = getDownloadURL;
 
 // Authentication Functions
 window.checkAuthState = function() {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-        currentUserId = storedUser;
-        const userObj = demoUsers[storedUser];
-        currentUsername = userObj ? userObj.username : storedUser;
-        document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
-        
-        // Hide login, show app
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('navbar').style.display = 'block';
-        document.getElementById('mainContainer').style.display = 'block';
-        
-        // Load user data
-        setTimeout(async () => {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserId = user.uid;
+            currentUsername = user.email;
+            document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
+            
+            // Hide login, show app
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('navbar').style.display = 'block';
+            document.getElementById('mainContainer').style.display = 'block';
+            
+            // Load user data
             await fetchJournalsForUser();
             renderSessionsList();
             window.firebaseRenderHistoryList();
             window.firebaseRenderMatchHistory();
             await window.firebaseRenderJournalList();
             initCalendar();
-        }, 500);
-        renderDesignItems();
-    } else {
-        // Show login, hide app
-        currentUserId = null;
-        currentUsername = null;
-        document.getElementById('currentUserDisplay').textContent = '';
-        document.getElementById('loginPage').style.display = 'flex';
-        document.getElementById('navbar').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'none';
-    }
+        } else {
+            // Show login, hide app
+            currentUserId = null;
+            currentUsername = null;
+            document.getElementById('currentUserDisplay').textContent = '';
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('navbar').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'none';
+        }
+    });
 };
 
-window.firebaseSignIn = async function(username, password) {
+window.firebaseSignIn = async function(email, password) {
     try {
-        currentUserId = username;
-        const userObj = demoUsers[username];
-        currentUsername = userObj ? userObj.username : username;
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
         
-        localStorage.setItem('currentUser', username);
+        currentUserId = user.uid;
+        currentUsername = user.email;
         document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
         
         // Hide login, show app
@@ -1113,28 +1098,18 @@ window.firebaseSignIn = async function(username, password) {
         document.getElementById('navbar').style.display = 'block';
         document.getElementById('mainContainer').style.display = 'block';
         
-        alert(`Welcome, ${currentUsername}!`);
         document.getElementById('signInEmail').value = '';
         document.getElementById('signInPassword').value = '';
-        
-        // Load user data
-        setTimeout(async () => {
-            await fetchJournalsForUser();
-            renderSessionsList();
-            window.firebaseRenderHistoryList();
-            window.firebaseRenderMatchHistory();
-            await window.firebaseRenderJournalList();
-            initCalendar();
-        }, 500);
     } catch (error) {
-        alert('Sign in failed: ' + error.message);
+        alert('Login failed: ' + error.message);
         console.error(error);
     }
 };
 
 window.firebaseLogout = async function() {
     try {
-        localStorage.removeItem('currentUser');
+        await signOut(auth);
+        
         currentUserId = null;
         currentUsername = null;
         document.getElementById('currentUserDisplay').textContent = '';
@@ -1143,8 +1118,6 @@ window.firebaseLogout = async function() {
         document.getElementById('loginPage').style.display = 'flex';
         document.getElementById('navbar').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'none';
-        
-        alert('Logged out successfully');
     } catch (error) {
         alert('Logout failed: ' + error.message);
         console.error(error);
