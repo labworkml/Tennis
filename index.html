@@ -796,6 +796,24 @@
             box-shadow: var(--shadow-lg);
         }
 
+        #sessionModal,
+        #mobilitySessionModal{
+            align-items:flex-start;
+            justify-content:center;
+            padding:24px 0;
+        }
+
+        #sessionModal .session-modal-box,
+        #mobilitySessionModal .session-modal-box{
+            width:min(92vw, 760px);
+            max-width:760px;
+            min-height:auto;
+            max-height:calc(100vh - 48px);
+            overflow-y:auto;
+            border-radius:20px;
+            margin:0 auto;
+        }
+
         #modalItemsList li {
             display: flex;
             align-items: center;
@@ -830,6 +848,35 @@
         #finishSessionBtn:hover {
             transform: translateY(-2px);
             background: var(--accent-600);
+        }
+
+        .session-progress{
+            margin-bottom: 1rem;
+            display:flex;
+            flex-direction:column;
+            gap:0.35rem;
+        }
+
+        .session-progress-text{
+            font-size:0.9rem;
+            font-weight:600;
+            color:#0f2540;
+        }
+
+        .session-progress-bar{
+            width:100%;
+            height:10px;
+            background:#e6edf3;
+            border-radius:999px;
+            overflow:hidden;
+        }
+
+        #sessionProgressFill{
+            height:100%;
+            width:0%;
+            background:linear-gradient(90deg,#22c55e,#16a34a);
+            border-radius:999px;
+            transition:width 0.3s ease;
         }
     
 /* Calendar Tab Styles */
@@ -1237,7 +1284,14 @@ body{
 #journalViewModal,
 #historyEditModal,
 #calendarDetailModal{
-    align-items:flex-end;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+}
+
+#sessionModal .session-modal-box,
+#mobilitySessionModal .session-modal-box{
+    max-height:100vh;
 }
 
 .session-modal-box,
@@ -1326,6 +1380,16 @@ body{
         border-top-left-radius:22px;
         border-top-right-radius:22px;
         padding:1rem;
+    }
+    #sessionModal,
+    #mobilitySessionModal,
+    #mobilityTemplateBuilderModal,
+    #mobilityDesignSessionModal,
+    #journalEntryModal,
+    #journalViewModal,
+    #historyEditModal,
+    #calendarDetailModal{
+        align-items:flex-end;
     }
 }
 
@@ -1588,7 +1652,7 @@ input:focus,textarea:focus,select:focus{
     }
 
     h1{
-        font-size:1.9rem;
+        font-size:1.6rem;
         margin-bottom:0.6rem;
         color:var(--text-primary);
     }
@@ -1706,19 +1770,19 @@ input:focus,textarea:focus,select:focus{
 
     /* ===== Larger module cards ===== */
     .module-card{
-        width:100%;
-        min-height:200px;
+        width:80%;
+        min-height:170px;
         padding:1.8rem 1.4rem;
         border-radius:18px;
     }
 
     .module-icon{
-        font-size:2.6rem;
+        font-size:3.0rem;
         margin-bottom:0.6rem;
     }
 
     .module-name{
-        font-size:1.1rem;
+        font-size:1.2rem;
     }
 
     /* ===== Better vertical balance ===== */
@@ -1863,7 +1927,7 @@ input:focus,textarea:focus,select:focus{
         <div id="home" class="tab-content active">
             <!-- Tennis Home Section -->
             <div id="tennisHomeSection" style="display:block;">
-                <h1>Welcome to My Tennis Training</h1>
+                <h1>Welcome to Tennis Training</h1>
                 <p style="margin-bottom:1rem;color:#555">Use the button below to design a new session.</p>
                 <div style="margin-top:1rem;">
                     <button class="submit-btn" id="designInlineBtn" onclick="switchTab('design', this)">Design Your Session</button>
@@ -2113,6 +2177,15 @@ input:focus,textarea:focus,select:focus{
                 <p id="modalSessionDate" style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;"></p>
                 <h2 id="modalSessionTitle" style="font-size:1.4rem;color:#0f2540;margin:0;"></h2>
             </div>
+
+            <div class="session-progress">
+                <div class="session-progress-text">
+                    <span id="sessionProgressLabel">0 of 0 completed</span>
+                </div>
+                <div class="session-progress-bar">
+                    <div id="sessionProgressFill"></div>
+                </div>
+            </div>
             
             <!-- Items Checklist -->
             <ul id="modalItemsList" style="list-style:none;padding:0;margin:0 0 2rem 0;"></ul>
@@ -2189,6 +2262,16 @@ input:focus,textarea:focus,select:focus{
                 <p id="mobilityModalTemplateName" style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;"></p>
                 <h2 style="font-size:1.4rem;color:#0f2540;margin:0;">Mobility Session</h2>
             </div>
+
+            <div class="session-progress">
+                <div class="session-progress-text">
+                    <span id="sessionProgressLabel">0 of 0 completed</span>
+                </div>
+                <div class="session-progress-bar">
+                    <div id="sessionProgressFill"></div>
+                </div>
+            </div>
+
             <ul id="mobilityModalItemsList" style="list-style:none;padding:0;margin:0 0 2rem 0;"></ul>
             <button style="width:100%;background:var(--accent);color:white;padding:1rem;border-radius:10px;border:none;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 8px 20px rgba(26,188,156,0.12);margin-top:1rem;" onclick="finishMobilitySession()">
                 Finish Session
@@ -2649,7 +2732,10 @@ input:focus,textarea:focus,select:focus{
                 </li>
             `).join('');
 
-            modal.style.display = 'block';
+            updateSessionProgress('#mobilitySessionModal', '#mobilityModalItemsList');
+
+            modal.style.display = 'flex';
+            modal.scrollTop = 0;
             document.body.style.overflow = 'hidden';
         }
 
@@ -2687,6 +2773,8 @@ input:focus,textarea:focus,select:focus{
                 itemEl.style.opacity = '1';
                 itemEl.style.background = 'linear-gradient(180deg,#fbfdff,#ffffff)';
             }
+
+            updateSessionProgress('#mobilitySessionModal', '#mobilityModalItemsList');
         }
 
         function closeMobilitySessionModal() {
@@ -2756,6 +2844,41 @@ input:focus,textarea:focus,select:focus{
         let currentSessionId = null; // Store the session ID for deletion
         let sessionCheckedItems = {};
 
+        function updateSessionProgress(modalSelector = '#sessionModal', listSelector = '#modalItemsList') {
+            const modal = document.querySelector(modalSelector);
+            if (!modal) return;
+
+            const items = modal.querySelectorAll(`${listSelector} li input[type="checkbox"]`);
+            const label = modal.querySelector('#sessionProgressLabel');
+            const fill = modal.querySelector('#sessionProgressFill');
+
+            if (!label || !fill) return;
+
+            if (!items.length) {
+                label.textContent = '0 of 0 completed';
+                fill.style.width = '0%';
+                fill.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+                return;
+            }
+
+            const total = items.length;
+            let completed = 0;
+
+            items.forEach(cb => {
+                if (cb.checked) completed++;
+            });
+
+            const percent = (completed / total) * 100;
+            label.textContent = `${completed} of ${total} completed`;
+            fill.style.width = percent + '%';
+
+            if (completed === total) {
+                fill.style.background = 'linear-gradient(90deg,#16a34a,#15803d)';
+            } else {
+                fill.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+            }
+        }
+
         function startSessionById(sessionId) {
             const sessionData = window.sessionDataMap[sessionId];
             if (!sessionData) {
@@ -2783,8 +2906,12 @@ input:focus,textarea:focus,select:focus{
                 </li>
             `).join('');
 
+            updateSessionProgress('#sessionModal', '#modalItemsList');
+
             // Show modal
-            document.getElementById('sessionModal').style.display = 'block';
+            const modal = document.getElementById('sessionModal');
+            modal.style.display = 'flex';
+            modal.scrollTop = 0;
             document.body.style.overflow = 'hidden';
         }
 
@@ -2807,6 +2934,8 @@ input:focus,textarea:focus,select:focus{
                 delete sessionCheckedItems[index];
                 item.classList.remove('checked');
             }
+
+            updateSessionProgress('#sessionModal', '#modalItemsList');
         }
 
         function finishSession() {
