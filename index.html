@@ -1271,11 +1271,17 @@ body{
     border:1px solid rgba(255,255,255,0.12);
     box-shadow:0 12px 28px rgba(15,23,42,0.25);
     padding:0.45rem;
-    grid-template-columns:repeat(4,minmax(0,1fr));
+    overflow-x:auto;
+    white-space:nowrap;
     gap:0.35rem;
+    scrollbar-width:none;
 }
 
+#mobileBottomNav::-webkit-scrollbar{display:none;}
+
 .bottom-nav-btn{
+    flex:0 0 auto;
+    min-width:96px;
     border:none;
     background:transparent;
     color:#dbe7ef;
@@ -1300,13 +1306,13 @@ body{
         padding:0.45rem;
         border-radius:14px;
     }
-    #mobileBottomNav.show{display:grid;}
+    #mobileBottomNav.show{display:flex;}
     h1{font-size:20px;}
     h2{font-size:18px;}
     .tab-content{padding:0.9rem;}
     .session-list li{padding:14px;}
-    .card-actions{display:grid;grid-template-columns:1fr;gap:0.45rem;width:100%;}
-    .card-actions .submit-btn{width:100%;}
+    .card-actions{display:flex;flex-wrap:wrap;gap:0.45rem;width:100%;justify-content:flex-start;}
+    .card-actions .submit-btn{width:auto;flex:0 1 auto;min-width:104px;}
     .session-modal-box,
     .journal-modal-box,
     .journal-view-box,
@@ -1410,8 +1416,23 @@ input:focus,textarea:focus,select:focus{
         width:100%;
         max-width:none;
     }
-    input,textarea,select,.submit-btn{
+    input,textarea,select{
         min-height:46px;
+    }
+    .submit-btn:not(.mobile-head-btn){
+        width:auto;
+        min-height:40px;
+        padding:10px 14px;
+        font-size:0.95rem;
+        border-radius:12px;
+    }
+    .submit-btn.btn-sm:not(.mobile-head-btn){
+        min-height:36px;
+        padding:8px 12px;
+        font-size:0.9rem;
+    }
+    .form-group > .submit-btn{
+        width:100%;
     }
     textarea{
         min-height:110px;
@@ -1423,8 +1444,15 @@ input:focus,textarea:focus,select:focus{
     .session-list li > div[style*="justify-content:space-between"]{
         align-items:flex-start !important;
     }
+    .tab-content > div[style*="justify-content:space-between"] > .submit-btn,
+    #history .submit-btn,
+    #mobilitySessions .submit-btn,
+    #mobilityTemplates .submit-btn{
+        width:auto !important;
+    }
     .card-actions{
         margin-top:0.4rem;
+        align-items:stretch;
     }
     .calendar-row{gap:5px;}
     .calendar-cell{font-size:0.82rem;}
@@ -1983,6 +2011,8 @@ input:focus,textarea:focus,select:focus{
         <button class="bottom-nav-btn" data-target-tab="" onclick="handleMobileBottomNavClick(this)">Sessions</button>
         <button class="bottom-nav-btn" data-target-tab="" onclick="handleMobileBottomNavClick(this)">Templates</button>
         <button class="bottom-nav-btn" data-target-tab="" onclick="handleMobileBottomNavClick(this)">Calendar</button>
+        <button class="bottom-nav-btn" data-target-tab="" onclick="handleMobileBottomNavClick(this)">History</button>
+        <button class="bottom-nav-btn" data-target-tab="" onclick="handleMobileBottomNavClick(this)">Journal</button>
     </div>
 
 <!-- Session Execution Modal Overlay -->
@@ -2115,7 +2145,9 @@ input:focus,textarea:focus,select:focus{
                 { label: 'Home', tab: 'home' },
                 { label: 'Sessions', tab: 'sessions' },
                 { label: 'Match', tab: 'match' },
-                { label: 'Calendar', tab: 'calendar' }
+                { label: 'History', tab: 'history' },
+                { label: 'Calendar', tab: 'calendar' },
+                { label: 'Journal', tab: 'journal' }
             ]
         };
 
@@ -2133,6 +2165,9 @@ input:focus,textarea:focus,select:focus{
             const config = mobileBottomNavConfig[currentModule] || [];
             const showMobileNav = isMobileViewport && config.length > 0;
             nav.classList.toggle('show', showMobileNav);
+            if (showMobileNav) {
+                nav.style.display = 'flex';
+            }
 
             const mobileButtons = nav.querySelectorAll('.bottom-nav-btn');
             mobileButtons.forEach((button, index) => {
