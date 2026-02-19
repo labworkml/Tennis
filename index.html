@@ -1079,6 +1079,407 @@
     }
 }
 
+/* ===== Mobile-First Premium UI Refactor Overrides ===== */
+:root{
+    --accent:#22c55e;
+    --accent-600:#16a34a;
+    --accent-700:#15803d;
+    --secondary:#3b82f6;
+    --bg:#eef2f7;
+    --card-glass:rgba(255,255,255,0.84);
+    --radius-lg:20px;
+    --shadow-soft:0 8px 24px rgba(15,23,42,0.08);
+}
+
+body{
+    margin:0;
+    padding:10px;
+    min-height:100vh;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(34,197,94,0.10), transparent 30%),
+        radial-gradient(circle at 95% 100%, rgba(59,130,246,0.10), transparent 35%),
+        linear-gradient(180deg,#eef2f7,#e6ebf2);
+}
+
+.container{
+    width:100%;
+    max-width:1000px;
+    margin:0 auto;
+    padding:16px;
+}
+
+.card,
+.tab-content,
+.session-list li,
+.journal-card,
+.actuary-module-card,
+.calendar-detail-box,
+.history-edit-box,
+.journal-modal-box,
+.journal-view-box,
+.note-container,
+.module-card,
+#calendarGrid,
+#mobilityCalendarGrid,
+#actuaryLearnList,
+#actuaryNotesList > div,
+#actuaryHomeView,
+#actuarySubjectView,
+#tennisHomeSection,
+#moduleHomeSection,
+#mobilityHome > div,
+#sessionsList,
+#mobilitySessionsList,
+#mobilityTemplatesList,
+#journalList{
+    background:var(--card-glass);
+    backdrop-filter:blur(12px);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-soft);
+}
+
+.tab-content{
+    padding:1rem;
+    border:1px solid rgba(255,255,255,0.55);
+    margin-bottom:14px;
+}
+
+.session-list li,
+.journal-card,
+.actuary-module-card,
+.module-card{
+    padding:16px;
+    margin-bottom:14px;
+    border-radius:18px;
+}
+
+.module-card{
+    min-height:130px;
+}
+
+.module-icon{
+    font-size:2.1rem;
+}
+
+.submit-btn{
+    width:100%;
+    padding:14px 18px;
+    border-radius:14px;
+    font-size:16px;
+    font-weight:600;
+    box-shadow:0 8px 18px rgba(34,197,94,0.22);
+}
+
+.submit-btn:active{
+    transform:scale(0.985);
+}
+
+.navbar{
+    border-radius:16px;
+    margin-bottom:8px;
+    padding:0.65rem 0.5rem;
+}
+
+.nav-tabs{
+    overflow-x:auto;
+    white-space:nowrap;
+    gap:0.5rem;
+    padding:0 0.4rem;
+    scrollbar-width:none;
+}
+
+.nav-tabs::-webkit-scrollbar{display:none;}
+
+.tab-button{
+    border-radius:999px;
+    padding:0.62rem 0.95rem;
+}
+
+#dashboard{
+    padding:1rem;
+}
+
+.dashboard-container{
+    width:100%;
+    max-width:1000px;
+    margin:0 auto;
+    padding:1rem;
+}
+
+.modules-grid{
+    gap:0.9rem;
+}
+
+#sessionModal,
+#mobilitySessionModal,
+#mobilityTemplateBuilderModal,
+#mobilityDesignSessionModal,
+#journalEntryModal,
+#journalViewModal,
+#historyEditModal,
+#calendarDetailModal{
+    align-items:flex-end;
+}
+
+.session-modal-box,
+.journal-modal-box,
+.journal-view-box,
+.history-edit-box,
+.calendar-detail-box{
+    width:100%;
+    max-width:760px;
+    max-height:92vh;
+    border-radius:20px;
+}
+
+.modal-actions{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.95) 30%);
+    padding-top:0.55rem;
+}
+
+#mobileBottomNav{
+    display:none;
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:10px;
+    z-index:130;
+    border-radius:18px;
+    background:rgba(20,28,38,0.78);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 12px 28px rgba(15,23,42,0.25);
+    padding:0.45rem;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:0.35rem;
+}
+
+.bottom-nav-btn{
+    border:none;
+    background:transparent;
+    color:#dbe7ef;
+    border-radius:12px;
+    padding:0.55rem 0.3rem;
+    font-weight:600;
+    font-size:0.82rem;
+}
+
+.bottom-nav-btn.active{
+    background:linear-gradient(180deg,var(--accent),var(--accent-600));
+    color:white;
+}
+
+@media (max-width: 768px) {
+    body{padding:8px 8px 92px 8px;}
+    .container{max-width:100%;padding:14px;}
+    #currentUserDisplay{display:none !important;}
+    #mobileBottomNav.show{display:grid;}
+    h1{font-size:20px;}
+    h2{font-size:18px;}
+    .tab-content{padding:0.9rem;}
+    .session-list li{padding:14px;}
+    .card-actions{display:grid;grid-template-columns:1fr;gap:0.45rem;width:100%;}
+    .card-actions .submit-btn{width:100%;}
+    .session-modal-box,
+    .journal-modal-box,
+    .journal-view-box,
+    .history-edit-box,
+    .calendar-detail-box{
+        max-width:100%;
+        margin:0;
+        min-height:88vh;
+        border-bottom-left-radius:0;
+        border-bottom-right-radius:0;
+        border-top-left-radius:22px;
+        border-top-right-radius:22px;
+        padding:1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    h1 { font-size:20px; }
+    h2 { font-size:18px; }
+}
+
+/* Second-pass polish: spacing rhythm, alignment, and premium consistency */
+#mainContainer > .tab-content > h1{
+    margin-bottom:0.4rem;
+}
+
+#mainContainer > .tab-content > p,
+#mainContainer > .tab-content .muted{
+    margin-bottom:0.9rem;
+}
+
+.form-group{margin-bottom:0.85rem;}
+input,textarea,select{border-radius:12px;}
+input:focus,textarea:focus,select:focus{
+    outline:none;
+    border-color:rgba(59,130,246,0.55);
+    box-shadow:0 0 0 3px rgba(59,130,246,0.14);
+}
+
+.filter-bar{
+    gap:0.6rem;
+    margin-bottom:0.9rem;
+}
+
+.filter-bar input,
+.filter-bar select{
+    min-height:44px;
+}
+
+.session-list li strong{
+    line-height:1.25;
+    margin-bottom:0.35rem;
+}
+
+.card-actions{
+    align-items:center;
+}
+
+#sessionsList li > div,
+#mobilitySessionsList li > div,
+#mobilityTemplatesList li > div,
+#historyList li > div,
+#matchHistoryList li > div{
+    width:100%;
+}
+
+#calendarGrid,
+#mobilityCalendarGrid{
+    padding:0.65rem;
+    border:1px solid rgba(255,255,255,0.55);
+}
+
+.calendar-row{
+    max-width:640px;
+    gap:6px;
+}
+
+.calendar-cell{
+    border-radius:12px;
+    font-size:0.9rem;
+}
+
+#dashboardHeader{
+    position:sticky;
+    border-radius:16px;
+    margin:0 0 0.55rem 0;
+}
+
+#dashboard{
+    padding-top:1rem;
+}
+
+.dashboard-subtitle{
+    margin-bottom:1.25rem;
+}
+
+.modules-grid .module-card{
+    min-height:160px;
+}
+
+#loginPage{
+    background:
+        radial-gradient(circle at 8% 5%, rgba(34,197,94,0.12), transparent 34%),
+        radial-gradient(circle at 94% 98%, rgba(59,130,246,0.10), transparent 38%),
+        linear-gradient(180deg,#eef2f7,#e6ebf2) !important;
+}
+
+#loginPage > div{
+    background:rgba(255,255,255,0.86) !important;
+    backdrop-filter:blur(12px);
+    border-radius:20px !important;
+    box-shadow:0 10px 28px rgba(15,23,42,0.10) !important;
+    border:1px solid rgba(255,255,255,0.7);
+}
+
+#mobileBottomNav{
+    bottom:calc(8px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+    .navbar{margin-bottom:6px;}
+    .tab-button{font-size:0.9rem;padding:0.58rem 0.86rem;}
+    .tab-content{margin-bottom:10px;}
+    .tab-content > div[style*="display:flex"]{
+        gap:0.65rem !important;
+    }
+    .filter-bar{
+        display:grid;
+        grid-template-columns:1fr;
+    }
+    .filter-bar input,
+    .filter-bar select{
+        width:100%;
+        max-width:none;
+    }
+    input,textarea,select,.submit-btn{
+        min-height:46px;
+    }
+    textarea{
+        min-height:110px;
+    }
+    .session-list li{
+        padding:12px;
+        margin-bottom:10px;
+    }
+    .session-list li > div[style*="justify-content:space-between"]{
+        align-items:flex-start !important;
+    }
+    .card-actions{
+        margin-top:0.4rem;
+    }
+    .calendar-row{gap:5px;}
+    .calendar-cell{font-size:0.82rem;}
+    .modules-grid .module-card{
+        min-height:128px;
+        padding:1.05rem 0.9rem;
+        align-items:flex-start;
+    }
+    .module-icon{margin-bottom:0.45rem;}
+    .module-name{font-size:1.03rem;}
+    #dashboardHeader .dashboard-header-user{display:none;}
+    #dashboardHeader{padding:0.72rem 0.9rem;}
+    #loginPage{padding:0.85rem !important;}
+    #loginPage > div{padding:1.25rem !important;}
+}
+
+@media (min-width: 769px) {
+    .tab-content{
+        padding:1.15rem;
+    }
+    .filter-bar{
+        align-items:center;
+    }
+    .card-actions{
+        justify-content:flex-end;
+    }
+}
+
+@media (min-width: 769px) {
+    .submit-btn{width:auto;}
+    .submit-btn.btn-sm,
+    .card-actions .submit-btn,
+    .modal-actions .submit-btn,
+    .filter-bar .submit-btn,
+    .nav-tabs .submit-btn,
+    #designInlineBtn,
+    #matchCancelEditBtn,
+    .dashboard-header-logout{
+        width:auto;
+    }
+    .session-list li:hover,
+    .module-card:hover,
+    .actuary-module-card:hover,
+    .journal-card:hover{
+        transform:translateY(-3px);
+    }
+}
+
 </style>
 </head>
 <body>
@@ -1403,6 +1804,13 @@
     </div>
     </div>
 
+    <div id="mobileBottomNav" aria-label="Mobile Navigation">
+        <button class="bottom-nav-btn" data-target-tab="mobilityHome" onclick="switchTab('mobilityHome', this)">Home</button>
+        <button class="bottom-nav-btn" data-target-tab="mobilitySessions" onclick="switchTab('mobilitySessions', this)">Sessions</button>
+        <button class="bottom-nav-btn" data-target-tab="mobilityTemplates" onclick="switchTab('mobilityTemplates', this)">Templates</button>
+        <button class="bottom-nav-btn" data-target-tab="mobilityCalendar" onclick="switchTab('mobilityCalendar', this)">Calendar</button>
+    </div>
+
 <!-- Session Execution Modal Overlay -->
     <div id="sessionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;">
         <div class="session-modal-box">
@@ -1522,6 +1930,21 @@
     </div>
 
     <script>
+        function updateMobileBottomNav(activeTab = '') {
+            const nav = document.getElementById('mobileBottomNav');
+            if (!nav) return;
+
+            const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
+            const showForMobility = currentModule === 'Mobility - Physio' && isMobileViewport;
+            nav.classList.toggle('show', showForMobility);
+
+            const mobileButtons = nav.querySelectorAll('.bottom-nav-btn');
+            mobileButtons.forEach(button => {
+                const tab = button.getAttribute('data-target-tab');
+                button.classList.toggle('active', showForMobility && tab === activeTab);
+            });
+        }
+
         function switchTab(tabName, el) {
             const contents = document.querySelectorAll('.tab-content');
             const buttons = document.querySelectorAll('.tab-button');
@@ -1580,6 +2003,7 @@
             // If an element was provided (nav button or inline button), mark it active
             if (el) {
                 el.classList.add('active');
+                updateMobileBottomNav(tabName);
                 // If the element is a nav button with data-tab, nothing else to do
                 return;
             }
@@ -1587,6 +2011,7 @@
             // Otherwise try to find a nav button that matches the tabName and mark it active
             const navBtn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === tabName);
             if (navBtn) navBtn.classList.add('active');
+            updateMobileBottomNav(tabName);
         }
 
         let designItems = [];
@@ -2155,6 +2580,7 @@
             const defaultHomeTab = moduleName === 'Mobility - Physio' ? 'mobilityHome' : 'home';
             const homeBtn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === defaultHomeTab);
             if (homeBtn) switchTab(defaultHomeTab, homeBtn);
+            updateMobileBottomNav(defaultHomeTab);
             
             if (currentModule === 'Tennis') {
                 // Load Tennis module data
@@ -2323,6 +2749,7 @@
             document.getElementById('navbar').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
             currentModule = null;
+            updateMobileBottomNav('');
         }
 
         function showApp() {
@@ -2330,10 +2757,17 @@
             document.getElementById('dashboardHeader').style.display = 'none';
             document.getElementById('navbar').style.display = 'block';
             document.getElementById('mainContainer').style.display = 'block';
+            const activeTab = document.querySelector('.tab-content.active')?.id || '';
+            updateMobileBottomNav(activeTab);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             window.checkAuthState();
+            updateMobileBottomNav('');
+            window.addEventListener('resize', () => {
+                const activeTab = document.querySelector('.tab-content.active')?.id || '';
+                updateMobileBottomNav(activeTab);
+            });
         });
 
     </script>
