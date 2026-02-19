@@ -2635,13 +2635,35 @@ window.firebaseAddMobilityTemplate = async function(data) {
             sets: exercise.sets,
             reps: exercise.reps
         }));
+        const items = exercises.map(exercise => ({
+            exerciseId: '',
+            name: exercise.name,
+            sets: exercise.sets,
+            duration: exercise.reps
+        }));
 
-        await addDoc(collection(db, 'mobilityTemplates'), {
+        const modernPayload = {
             userId: currentUserId,
             name: data.name,
             exercises,
+            items,
             createdAt: Date.now()
-        });
+        };
+
+        try {
+            await addDoc(collection(db, 'mobilityTemplates'), modernPayload);
+        } catch (writeError) {
+            if (String(writeError?.message || '').toLowerCase().includes('missing or insufficient permissions')) {
+                await addDoc(collection(db, 'mobilityTemplates'), {
+                    userId: currentUserId,
+                    name: data.name,
+                    items,
+                    createdAt: Date.now()
+                });
+            } else {
+                throw writeError;
+            }
+        }
     } catch (error) {
         alert('Error adding mobility template: ' + error.message);
         console.error(error);
@@ -2658,7 +2680,21 @@ window.firebaseGetMobilityTemplates = async function() {
 
     const templates = [];
     snapshot.forEach(docSnap => {
-        templates.push({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        const sourceExercises = (Array.isArray(data.exercises) && data.exercises.length > 0)
+            ? data.exercises
+            : (Array.isArray(data.items) ? data.items : []);
+
+        templates.push({
+            id: docSnap.id,
+            ...data,
+            exercises: sourceExercises.map(exercise => ({
+                name: exercise.name || '',
+                instructions: exercise.instructions || '',
+                sets: Number(exercise.sets) || 1,
+                reps: Number(exercise.reps || exercise.duration) || 1
+            }))
+        });
     });
 
     templates.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -2673,15 +2709,35 @@ window.firebaseUpdateMobilityTemplate = async function(id, data) {
         const existing = docSnap.data();
         if (existing.userId !== currentUserId) return alert('You do not have permission to edit this template');
 
-        await updateDoc(refDoc, {
-            name: data.name,
-            exercises: (data.exercises || []).map(exercise => ({
-                name: exercise.name,
-                instructions: exercise.instructions,
-                sets: exercise.sets,
-                reps: exercise.reps
-            }))
-        });
+        const exercises = (data.exercises || []).map(exercise => ({
+            name: exercise.name,
+            instructions: exercise.instructions,
+            sets: exercise.sets,
+            reps: exercise.reps
+        }));
+        const items = exercises.map(exercise => ({
+            exerciseId: '',
+            name: exercise.name,
+            sets: exercise.sets,
+            duration: exercise.reps
+        }));
+
+        try {
+            await updateDoc(refDoc, {
+                name: data.name,
+                exercises,
+                items
+            });
+        } catch (writeError) {
+            if (String(writeError?.message || '').toLowerCase().includes('missing or insufficient permissions')) {
+                await updateDoc(refDoc, {
+                    name: data.name,
+                    items
+                });
+            } else {
+                throw writeError;
+            }
+        }
     } catch (error) {
         alert('Error updating mobility template: ' + error.message);
         console.error(error);
@@ -2745,7 +2801,7 @@ window.firebaseCreateMobilitySession = async function(templateId, date) {
 
         if (!template) return alert('Template not found');
 
-        await addDoc(collection(db, 'mobilitySessions'), {
+        const modernPayload = {
             userId: currentUserId,
             templateId,
             templateName: template.name || 'Untitled Template',
@@ -2756,9 +2812,35 @@ window.firebaseCreateMobilitySession = async function(templateId, date) {
                 sets: exercise.sets,
                 reps: exercise.reps
             })),
+            items: (template.exercises || []).map(exercise => ({
+                exerciseId: '',
+                name: exercise.name,
+                instructions: exercise.instructions,
+                sets: exercise.sets,
+                reps: exercise.reps,
+                duration: exercise.reps
+            })),
             status: 'planned',
             createdAt: Date.now()
-        });
+        };
+
+        try {
+            await addDoc(collection(db, 'mobilitySessions'), modernPayload);
+        } catch (writeError) {
+            if (String(writeError?.message || '').toLowerCase().includes('missing or insufficient permissions')) {
+                await addDoc(collection(db, 'mobilitySessions'), {
+                    userId: currentUserId,
+                    templateId,
+                    templateName: template.name || 'Untitled Template',
+                    date,
+                    items: modernPayload.items,
+                    status: 'planned',
+                    createdAt: Date.now()
+                });
+            } else {
+                throw writeError;
+            }
+        }
 
         await window.firebaseRenderMobilitySessions();
     } catch (error) {
@@ -2777,7 +2859,21 @@ window.firebaseGetMobilitySessions = async function() {
 
     const sessions = [];
     snapshot.forEach(docSnap => {
-        sessions.push({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        const sourceExercises = (Array.isArray(data.exercises) && data.exercises.length > 0)
+            ? data.exercises
+            : (Array.isArray(data.items) ? data.items : []);
+
+        sessions.push({
+            id: docSnap.id,
+            ...data,
+            exercises: sourceExercises.map(exercise => ({
+                name: exercise.name || '',
+                instructions: exercise.instructions || '',
+                sets: Number(exercise.sets) || 1,
+                reps: Number(exercise.reps || exercise.duration) || 1
+            }))
+        });
     });
 
     sessions.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -5041,9 +5137,12 @@ function openMobilityCalendarDetail(dateStr) {
 
     let html = '<div class="calendar-detail-section"><div class="calendar-detail-title">Mobility Session Completed</div>';
     sessions.forEach(session => {
+        const exercises = (session.exercises && session.exercises.length > 0)
+            ? session.exercises
+            : (session.items || []);
         html += `<div class="calendar-detail-item"><strong>${session.templateName || 'Untitled Template'}</strong></div>`;
         html += '<div class="calendar-detail-item" style="margin-top:0.3rem;">';
-        html += (session.exercises || []).map(item => `${item.name} (${item.sets} x ${item.reps})`).join(' | ') || 'No exercise details';
+        html += exercises.map(item => `${item.name} (${item.sets} x ${item.reps || item.duration})`).join(' | ') || 'No exercise details';
         html += '</div>';
     });
     html += '</div>';
