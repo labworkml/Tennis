@@ -3399,11 +3399,6 @@ window.firebaseSignIn = async function(email, password) {
         currentUsername = user.email;
         document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
         
-        // Hide login, show app
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('navbar').style.display = 'block';
-        document.getElementById('mainContainer').style.display = 'block';
-        
         document.getElementById('signInEmail').value = '';
         document.getElementById('signInPassword').value = '';
     } catch (error) {
