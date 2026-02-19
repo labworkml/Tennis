@@ -2364,6 +2364,10 @@ input:focus,textarea:focus,select:focus{
             const navBtn = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === tabName);
             if (navBtn) navBtn.classList.add('active');
             updateMobileBottomNav(tabName);
+
+            if (currentModule && tabName && tabName !== 'dashboard') {
+                persistUIState({ module: currentModule, tab: tabName });
+            }
         }
 
         let designItems = [];
@@ -2904,6 +2908,36 @@ input:focus,textarea:focus,select:focus{
         let currentModule = null;
         let currentMatchEditId = null;
         let currentHistoryEditId = null;
+        const UI_STATE_STORAGE_KEY = 'tennis_ui_state';
+
+        function getPersistedUIState() {
+            try {
+                const raw = localStorage.getItem(UI_STATE_STORAGE_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function persistUIState(nextState = {}) {
+            try {
+                const prev = getPersistedUIState();
+                const merged = { ...prev, ...nextState };
+                localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(merged));
+            } catch {
+            }
+        }
+
+        function clearPersistedUIState() {
+            try {
+                localStorage.removeItem(UI_STATE_STORAGE_KEY);
+            } catch {
+            }
+        }
+
+        window.getPersistedUIState = getPersistedUIState;
+        window.persistUIState = persistUIState;
+        window.clearPersistedUIState = clearPersistedUIState;
 
         function handleSignIn() {
             const email = document.getElementById('signInEmail').value.trim();
@@ -2922,6 +2956,7 @@ input:focus,textarea:focus,select:focus{
 
         function selectModule(moduleName) {
             currentModule = moduleName;
+            persistUIState({ module: moduleName });
             showApp();
             updateMobileTopHeader();
             
@@ -3102,6 +3137,7 @@ input:focus,textarea:focus,select:focus{
             document.getElementById('navbar').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
             currentModule = null;
+            persistUIState({ module: null, tab: 'dashboard' });
             updateMobileTopHeader();
             updateMobileBottomNav('');
         }
@@ -3181,14 +3217,34 @@ window.checkAuthState = function() {
             currentUserId = user.uid;
             currentUsername = user.email;
             document.getElementById('currentUserDisplay').textContent = `👤 ${currentUsername}`;
-            
-            // Hide login, show dashboard
+
+            // Hide login first
             document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'flex';
-            document.getElementById('dashboardHeader').style.display = 'flex';
             document.getElementById('dashboardUserEmail').textContent = currentUsername;
-            document.getElementById('navbar').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'none';
+
+            const savedState = window.getPersistedUIState ? window.getPersistedUIState() : {};
+            const savedModule = savedState?.module || null;
+            const savedTab = savedState?.tab || '';
+
+            if (savedModule) {
+                selectModule(savedModule);
+
+                const fallbackTab = savedModule === 'Mobility - Physio' ? 'mobilityHome' : 'home';
+                const targetTab = savedTab && savedTab !== 'dashboard' ? savedTab : fallbackTab;
+                const targetButton = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === targetTab && b.style.display !== 'none');
+
+                if (targetButton) {
+                    switchTab(targetTab, targetButton);
+                } else {
+                    const fallbackButton = Array.from(document.querySelectorAll('.tab-button')).find(b => b.dataset.tab === fallbackTab && b.style.display !== 'none');
+                    if (fallbackButton) switchTab(fallbackTab, fallbackButton);
+                }
+            } else {
+                document.getElementById('dashboard').style.display = 'flex';
+                document.getElementById('dashboardHeader').style.display = 'flex';
+                document.getElementById('navbar').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'none';
+            }
             
         } else {
             // Show login, hide everything else
@@ -3241,6 +3297,7 @@ window.firebaseLogout = async function() {
         document.getElementById('dashboardHeader').style.display = 'none';
         document.getElementById('navbar').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'none';
+        if (window.clearPersistedUIState) window.clearPersistedUIState();
     } catch (error) {
         alert('Logout failed: ' + error.message);
         console.error(error);
