@@ -1460,20 +1460,167 @@ input:focus,textarea:focus,select:focus{
 }
 
 @media (min-width: 769px) {
-    .tab-content{
-        padding:1.15rem;
+    :root{
+        --card-radius:18px;
+        --card-border:#e6edf5;
+        --shadow-card:0 10px 30px rgba(15,23,42,0.08);
+        --shadow-hover:0 20px 45px rgba(15,23,42,0.12);
+        --text-primary:#0f2540;
+        --text-muted:#64748b;
+        --accent:#22c55e;
     }
-    .filter-bar{
-        align-items:center;
-    }
-    .card-actions{
-        justify-content:flex-end;
-    }
-}
 
-@media (min-width: 769px) {
+    body{
+        padding:0;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(34,197,94,0.12), transparent 35%),
+            radial-gradient(circle at 80% 80%, rgba(59,130,246,0.10), transparent 40%),
+            linear-gradient(180deg,#f8fbff 0%, #eef2f7 100%);
+    }
+
+    #dashboard{
+        min-height:100vh;
+        padding:1.1rem 1rem 0.8rem;
+        padding-top:4.7rem;
+        align-items:stretch;
+        justify-content:flex-start;
+    }
+
     #mobileTopHeader{display:none !important;}
-    .submit-btn{width:auto;}
+
+    .container{
+        max-width:1200px;
+        margin:1.4rem auto;
+        padding:0 1rem;
+    }
+
+    .navbar{
+        background:rgba(255,255,255,0.75);
+        backdrop-filter:blur(14px);
+        border:1px solid rgba(255,255,255,0.6);
+        border-radius:14px;
+        margin-bottom:1rem;
+        box-shadow:0 10px 30px rgba(15,23,42,0.08);
+    }
+
+    .tab-button{color:#334155;}
+
+    .tab-button.active{
+        background:linear-gradient(180deg,#22c55e,#16a34a);
+        color:#ffffff;
+        box-shadow:0 6px 20px rgba(34,197,94,0.35);
+    }
+
+    .modules-grid{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
+        max-width:940px;
+        margin:0 auto;
+        gap:1.25rem;
+    }
+
+    .module-card{
+        flex:0 1 285px;
+        max-width:285px;
+        min-height:150px;
+        padding:1.15rem 1rem;
+        border-radius:var(--card-radius);
+        background:#ffffff;
+        border:1px solid var(--card-border);
+        box-shadow:var(--shadow-card);
+        transition:all 0.25s ease;
+    }
+
+    .module-card:hover{
+        transform:translateY(-4px) scale(1.01);
+        box-shadow:var(--shadow-hover);
+    }
+
+    .module-icon{
+        font-size:2.15rem;
+        margin-bottom:0.45rem;
+    }
+
+    .module-name{
+        font-size:1rem;
+        font-weight:600;
+        color:var(--text-primary);
+    }
+
+    .dashboard-title{
+        font-size:2.2rem;
+        margin-bottom:0.35rem;
+    }
+
+    .dashboard-subtitle{
+        font-size:1rem;
+        margin-bottom:1.4rem;
+        color:var(--text-muted);
+    }
+
+    .tab-content,
+    .session-list li,
+    .journal-card,
+    .actuary-module-card,
+    .actuary-note-card,
+    .actuary-learn-card{
+        border-radius:var(--card-radius);
+        background:#ffffff;
+        border:1px solid var(--card-border);
+        box-shadow:var(--shadow-card);
+    }
+
+    .tab-content{
+        padding:1.8rem;
+    }
+
+    #calendar.tab-content,
+    #mobilityCalendar.tab-content{
+        padding:1.15rem 1.2rem 1rem;
+    }
+
+    .session-list li:hover,
+    .journal-card:hover,
+    .actuary-module-card:hover{
+        transform:translateY(-4px);
+        box-shadow:var(--shadow-hover);
+    }
+
+    h1{
+        font-size:1.9rem;
+        margin-bottom:0.6rem;
+        color:var(--text-primary);
+    }
+
+    h2{
+        font-size:1.4rem;
+        color:var(--text-primary);
+    }
+
+    p{
+        color:var(--text-muted);
+    }
+
+    .filter-bar{align-items:center;}
+
+    .card-actions{justify-content:flex-end;}
+
+    .submit-btn{
+        width:auto;
+        background:#22c55e;
+        border:none;
+        border-radius:12px;
+        padding:.75rem 1.3rem;
+        font-weight:600;
+        box-shadow:0 6px 18px rgba(34,197,94,0.25);
+    }
+
+    .submit-btn:hover{
+        transform:translateY(-2px);
+        box-shadow:0 10px 24px rgba(34,197,94,0.32);
+    }
+
     .submit-btn.btn-sm,
     .card-actions .submit-btn,
     .modal-actions .submit-btn,
@@ -1484,182 +1631,45 @@ input:focus,textarea:focus,select:focus{
     .dashboard-header-logout{
         width:auto;
     }
-    .session-list li:hover,
-    .module-card:hover,
-    .actuary-module-card:hover,
-    .journal-card:hover{
-        transform:translateY(-3px);
+
+    .submit-btn.btn-danger{
+        background:#ef4444;
+        box-shadow:0 6px 18px rgba(239,68,68,0.25);
+    }
+
+    #calendar,
+    #mobilityCalendar{
+        max-width:700px;
+    }
+
+    #calendarGrid,
+    #mobilityCalendarGrid{
+        padding:0.4rem;
+    }
+
+    .calendar-row{
+        max-width:470px;
+        gap:5px;
+    }
+
+    .calendar-cell{
+        border-radius:12px;
+        font-size:0.8rem;
+        background:#f1f5f9;
+    }
+
+    #calendar h1,
+    #mobilityCalendar h1{
+        margin-bottom:0.35rem;
+        font-size:1.8rem;
+    }
+
+    #calendar select,
+    #mobilityCalendar select{
+        margin-bottom:0.75rem;
+        padding:0.6rem 0.85rem;
     }
 }
-
-    /* ===== DESKTOP RESTORE (DO NOT TOUCH MOBILE) ===== */
-    @media (min-width: 769px) {
-
-        body{
-            padding:0;
-        }
-
-        .container{
-            max-width:1100px;
-            padding:0 1rem;
-            margin:2.5rem auto;
-        }
-
-        .tab-content{
-            background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
-            border:1px solid #eef4f8;
-            box-shadow:0 10px 26px rgba(15,23,42,0.07);
-            border-radius:14px;
-            padding:1.8rem;
-        }
-
-        .session-list li,
-        .journal-card,
-        .actuary-module-card,
-        .module-card{
-            background:linear-gradient(180deg,#ffffff,#fbfdff);
-            backdrop-filter:none;
-            border:1px solid #eef4f8;
-            box-shadow:0 10px 26px rgba(15,23,42,0.07);
-        }
-
-        .submit-btn{
-            width:auto;
-            padding:.75rem 1.2rem;
-        }
-
-        .navbar{
-            border-radius:14px;
-            margin-bottom:1rem;
-            padding:0.8rem 1rem;
-        }
-
-        .modules-grid{
-            grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-            gap:1.8rem;
-        }
-
-        .module-card{
-            min-height:220px;
-            padding:2rem 1.2rem;
-        }
-
-    }
-
-    /* ===== PREMIUM DESKTOP POLISH ===== */
-    @media (min-width: 769px) {
-
-        /* ===== Color System ===== */
-        :root{
-            --accent:#6ee7b7;
-            --accent-strong:#34d399;
-            --blue-soft:#93c5fd;
-            --card-bg:#ffffff;
-            --border-soft:#e6edf5;
-        }
-
-        body{
-            background:
-                radial-gradient(circle at 20% 20%, rgba(110,231,183,0.20), transparent 35%),
-                radial-gradient(circle at 80% 80%, rgba(147,197,253,0.18), transparent 40%),
-                linear-gradient(180deg,#f7fafc 0%, #eef2f7 100%);
-        }
-
-        /* ===== Container tighter ===== */
-        .container{
-            max-width:1050px;
-        }
-
-        /* ===== Dashboard Cards ===== */
-        .modules-grid{
-            grid-template-columns: repeat(5, 1fr);
-            gap:1.2rem;
-        }
-
-        .module-card{
-            min-height:170px;
-            padding:1.4rem 1rem;
-            border-radius:18px;
-            background:linear-gradient(180deg,#ffffff,#f8fbff);
-            border:1px solid var(--border-soft);
-            box-shadow:0 10px 25px rgba(15,23,42,0.08);
-        }
-
-        .module-card:hover{
-            transform:translateY(-6px) scale(1.02);
-            box-shadow:0 20px 45px rgba(15,23,42,0.12);
-            border-color:rgba(52,211,153,0.35);
-        }
-
-        .module-icon{
-            font-size:2.4rem;
-            margin-bottom:0.6rem;
-        }
-
-        .module-name{
-            font-size:1.05rem;
-        }
-
-        /* ===== Dashboard Title ===== */
-        .dashboard-title{
-            font-size:2.2rem;
-            margin-bottom:0.3rem;
-        }
-
-        .dashboard-subtitle{
-            margin-bottom:2rem;
-            color:#64748b;
-        }
-
-        /* ===== Calendar Fit Better ===== */
-        #calendar,
-        #mobilityCalendar{
-            max-width:720px;
-        }
-
-        #calendarGrid,
-        #mobilityCalendarGrid{
-            padding:0.6rem;
-        }
-
-        .calendar-row{
-            max-width:520px;
-            gap:6px;
-        }
-
-        .calendar-cell{
-            border-radius:12px;
-            font-size:0.85rem;
-            background:#f1f5f9;
-        }
-
-        .calendar-cell.cal-train{
-            background:#ef4444;
-            color:#ffffff;
-        }
-
-        .calendar-cell.cal-match{
-            background:#3b82f6;
-            color:#ffffff;
-        }
-
-        .calendar-cell.cal-mobility{
-            background:#22c55e;
-            color:#ffffff;
-        }
-
-        /* ===== Cards everywhere ===== */
-        .tab-content{
-            border-radius:16px;
-            box-shadow:0 12px 30px rgba(15,23,42,0.07);
-        }
-
-        .session-list li,
-        .journal-card{
-            border-radius:16px;
-        }
-
-    }
 
         /* Final calendar event color lock */
         .calendar-cell.cal-train{
@@ -1676,6 +1686,83 @@ input:focus,textarea:focus,select:focus{
             background:#ef4444 !important;
             color:#ffffff !important;
         }
+
+@media (min-width: 769px) {
+
+    /* ===== Dashboard container wider ===== */
+    .dashboard-container{
+        max-width:1200px;
+        margin:0 auto;
+    }
+
+    /* ===== Modules grid wider and balanced ===== */
+    .modules-grid{
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        max-width:1050px;
+        margin:0 auto;
+        gap:2rem;
+    }
+
+    /* ===== Larger module cards ===== */
+    .module-card{
+        width:100%;
+        min-height:200px;
+        padding:1.8rem 1.4rem;
+        border-radius:18px;
+    }
+
+    .module-icon{
+        font-size:2.6rem;
+        margin-bottom:0.6rem;
+    }
+
+    .module-name{
+        font-size:1.1rem;
+    }
+
+    /* ===== Better vertical balance ===== */
+    .dashboard-title{
+        margin-top:1rem;
+    }
+
+    .dashboard-subtitle{
+        margin-bottom:2.5rem;
+    }
+
+}
+
+@media (min-width: 769px) {
+    .history-card-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:1rem;
+    }
+
+    .history-actions{
+        display:flex;
+        gap:12px;
+        flex-shrink:0;
+    }
+
+    .history-actions .submit-btn{
+        padding:0.45rem 0.9rem;
+        border-radius:10px;
+        font-size:0.85rem;
+        font-weight:600;
+    }
+
+    .history-actions .btn-success{
+        background:#22c55e;
+        box-shadow:0 4px 12px rgba(34,197,94,0.25);
+    }
+
+    .history-actions .btn-danger{
+        background:#ef4444;
+        box-shadow:0 4px 12px rgba(239,68,68,0.25);
+    }
+}
 
 </style>
 </head>
@@ -3691,18 +3778,18 @@ window.firebaseRenderHistoryList = async function() {
                 if (searchQuery && !combinedText.includes(searchQuery)) return;
                 const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
                 const journalBtn = `<button class='submit-btn btn-secondary btn-sm' style='margin-top:0.5rem;' onclick='openJournalForRecord("session", "${docSnap.id}", "${h.date}")'>${journalBtnText}</button>`;
-                const editBtn = `<button class='submit-btn btn-sm' onclick='editHistorySession("${docSnap.id}")'>Edit</button>`;
+                const editBtn = `<button class='submit-btn btn-success btn-sm' onclick='editHistorySession("${docSnap.id}")'>Edit</button>`;
                 const deleteBtn = `<button class='submit-btn btn-danger btn-sm' onclick='deleteHistorySession("${docSnap.id}")'>Delete</button>`;
                 html += `
         <li>
-            <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="history-card-header">
                 <div>
                     <strong>${h.date}</strong>
                     <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Completed: ${h.completedItemsCount}/${h.totalItems} items <span class="badge badge-accent">${completionPercentage}%</span></p>
                     <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${finishedDate}</p>
                     ${journalBtn}
                 </div>
-                <div class="card-actions">
+                <div class="history-actions">
                     ${editBtn}
                     ${deleteBtn}
                 </div>
@@ -3787,11 +3874,11 @@ window.firebaseRenderMatchHistory = async function() {
                         if (searchQuery && !combinedText.includes(searchQuery)) return;
             const journalBtnText = journalMapByRecordId[docSnap.id] ? 'Edit Journal' : 'Add Journal';
             const journalBtn = `<button class='submit-btn btn-secondary btn-sm' style='margin-top:0.5rem;' onclick='openJournalForRecord("match", "${docSnap.id}", "${m.date}")'>${journalBtnText}</button>`;
-            const editBtn = `<button class='submit-btn btn-sm' onclick='editMatchRecord("${docSnap.id}")'>Edit</button>`;
+                        const editBtn = `<button class='submit-btn btn-success btn-sm' onclick='editMatchRecord("${docSnap.id}")'>Edit</button>`;
             const deleteBtn = `<button class='submit-btn btn-danger btn-sm' onclick='deleteMatchRecord("${docSnap.id}")'>Delete</button>`;
             html += `
         <li>
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div class="history-card-header">
             <div style="flex:1;">
               <strong>${m.date}</strong> vs <strong>${m.opponent}</strong>
               <p style="color:var(--muted);font-size:0.85rem;margin:0.3rem 0 0 0;">Score: ${m.score}</p>
@@ -3799,7 +3886,7 @@ window.firebaseRenderMatchHistory = async function() {
               <p style="color:var(--muted);font-size:0.8rem;margin:0.2rem 0 0 0;">${savedDate}</p>
               ${journalBtn}
             </div>
-            <div class="card-actions">
+                        <div class="history-actions">
               ${editBtn}
               ${deleteBtn}
             </div>
