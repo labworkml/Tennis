@@ -1926,6 +1926,35 @@ input:focus,textarea:focus,select:focus{
     width:auto;
 }
 
+.insurance-subview{display:none;}
+.insurance-subview.active{display:block;}
+
+.insurance-empty-state{
+    border:1px dashed #cbd5e1;
+    border-radius:16px;
+    padding:1rem;
+    color:#64748b;
+    background:linear-gradient(180deg,#ffffff,#f8fafc);
+}
+
+.insurance-act-meta{
+    color:#475569;
+    font-size:0.9rem;
+    margin-bottom:0.35rem;
+    font-weight:600;
+}
+
+.insurance-provision-card{
+    cursor:default;
+}
+
+.insurance-provision-actions{
+    display:flex;
+    gap:0.5rem;
+    flex-wrap:wrap;
+    margin-top:0.8rem;
+}
+
 .insurance-tags{
     display:flex;
     flex-wrap:wrap;
@@ -1956,7 +1985,7 @@ input:focus,textarea:focus,select:focus{
     inset:0;
     background:rgba(20,28,38,0.5);
     backdrop-filter:blur(8px);
-    z-index:140;
+    z-index:1200;
     align-items:center;
     justify-content:center;
     padding:1rem;
@@ -1980,6 +2009,13 @@ input:focus,textarea:focus,select:focus{
     font-weight:700;
     color:#0f2540;
     margin-bottom:0.9rem;
+}
+
+.insurance-modal .modal-actions{
+    position:static;
+    bottom:auto;
+    background:transparent;
+    padding-top:0;
 }
 
 .insurance-chat-wrap{
@@ -2220,12 +2256,24 @@ input:focus,textarea:focus,select:focus{
                     </div>
 
                     <div id="insuranceProvisionsView" class="insurance-view">
-                        <div class="insurance-section-header">
-                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
-                            <button class="submit-btn btn-sm" onclick="openInsuranceProvisionFormModal()">+ Add Provision</button>
+                        <div id="insuranceActsScreen" class="insurance-subview active">
+                            <div class="insurance-section-header">
+                                <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
+                                <button class="submit-btn btn-sm" onclick="openInsuranceAddActModal()">+ Add Act</button>
+                            </div>
+                            <h1>Insurance Acts</h1>
+                            <div id="insuranceActsList" class="insurance-grid"></div>
                         </div>
-                        <h1>Provisions</h1>
-                        <div id="insuranceProvisionsList" class="insurance-grid"></div>
+
+                        <div id="insuranceActProvisionsScreen" class="insurance-subview">
+                            <div class="insurance-section-header">
+                                <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="openInsuranceActsScreen()">← Back to Acts</button>
+                                <button class="submit-btn btn-sm" onclick="openInsuranceProvisionFormModal()">+ Add Provision</button>
+                            </div>
+                            <h1 id="insuranceActiveActTitle">Act</h1>
+                            <p id="insuranceActiveActDescription" class="muted" style="margin-bottom:0.8rem;"></p>
+                            <div id="insuranceActProvisionsList" class="insurance-grid"></div>
+                        </div>
                     </div>
 
                     <div id="insuranceCompaniesView" class="insurance-view">
@@ -2277,23 +2325,69 @@ input:focus,textarea:focus,select:focus{
                         </div>
                     </div>
 
-                    <div id="insuranceProvisionFormModal" class="insurance-modal" onclick="if(event.target.id==='insuranceProvisionFormModal'){closeInsuranceProvisionFormModal();}">
+                    <div id="insuranceAddActModal" class="insurance-modal" onclick="if(event.target.id==='insuranceAddActModal'){closeInsuranceAddActModal();}">
                         <div class="insurance-modal-box" style="max-width:680px;">
-                            <h2 class="insurance-modal-title">Add Provision</h2>
+                            <h2 class="insurance-modal-title" id="insuranceActFormTitle">Add Act</h2>
                             <div class="form-group">
-                                <label for="insuranceNewProvisionSection">Section Number</label>
-                                <input type="text" id="insuranceNewProvisionSection" placeholder="e.g., Section 62">
+                                <label for="insuranceNewActName">Act Name</label>
+                                <input type="text" id="insuranceNewActName" placeholder="e.g., Insurance Act">
                             </div>
                             <div class="form-group">
-                                <label for="insuranceNewProvisionTitle">Title</label>
-                                <input type="text" id="insuranceNewProvisionTitle" placeholder="Provision title">
+                                <label for="insuranceNewActYear">Year</label>
+                                <input type="number" id="insuranceNewActYear" placeholder="e.g., 1938" min="1800" max="2100">
                             </div>
                             <div class="form-group">
-                                <label for="insuranceNewProvisionExplanation">Short Explanation</label>
-                                <textarea id="insuranceNewProvisionExplanation" placeholder="Brief explanation"></textarea>
+                                <label for="insuranceNewActDescription">Description</label>
+                                <textarea id="insuranceNewActDescription" placeholder="Short description"></textarea>
                             </div>
                             <div class="modal-actions">
-                                <button class="submit-btn" onclick="saveInsuranceProvisionDummy()">Save Provision</button>
+                                <button class="submit-btn" id="insuranceActSaveBtn" onclick="saveInsuranceAct()">Save Act</button>
+                                <button class="submit-btn btn-muted" onclick="closeInsuranceAddActModal()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="insuranceProvisionFormModal" class="insurance-modal" onclick="if(event.target.id==='insuranceProvisionFormModal'){closeInsuranceProvisionFormModal();}">
+                        <div class="insurance-modal-box" style="max-width:760px;">
+                            <h2 class="insurance-modal-title" id="insuranceProvisionFormTitle">Add Provision</h2>
+                            <div class="form-group">
+                                <label for="insuranceProvisionSectionNumber">Section Number</label>
+                                <input type="text" id="insuranceProvisionSectionNumber" placeholder="e.g., Section 39">
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionSectionTitle">Section Title</label>
+                                <input type="text" id="insuranceProvisionSectionTitle" placeholder="e.g., Nomination by Policyholder">
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionSectionText">Section Text</label>
+                                <textarea id="insuranceProvisionSectionText" placeholder="Full legal section text"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionPlainExplanation">Plain Explanation</label>
+                                <textarea id="insuranceProvisionPlainExplanation" placeholder="Explain in simple language"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionPurpose">Purpose of Section</label>
+                                <textarea id="insuranceProvisionPurpose" placeholder="Why this section exists"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionTags">Tags (comma separated)</label>
+                                <input type="text" id="insuranceProvisionTags" placeholder="e.g., nomination, claims">
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionRelatedSections">Related Sections (comma separated)</label>
+                                <input type="text" id="insuranceProvisionRelatedSections" placeholder="e.g., Section 38, Section 45">
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionSupervisoryFocusAreas">Supervisory Focus Areas</label>
+                                <textarea id="insuranceProvisionSupervisoryFocusAreas" placeholder="Regulatory or supervisory monitoring focus"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceProvisionPracticalExamples">Practical Examples</label>
+                                <textarea id="insuranceProvisionPracticalExamples" placeholder="Real-world use cases"></textarea>
+                            </div>
+                            <div class="modal-actions">
+                                <button class="submit-btn" onclick="saveInsuranceProvision()">Save</button>
                                 <button class="submit-btn btn-muted" onclick="closeInsuranceProvisionFormModal()">Cancel</button>
                             </div>
                         </div>
@@ -3423,38 +3517,42 @@ input:focus,textarea:focus,select:focus{
         let currentModule = null;
         let currentMatchEditId = null;
         let currentHistoryEditId = null;
-        let insuranceProvisions = [
+        let insuranceActs = [
             {
-                sectionNumber: 'Section 39',
-                title: 'Nomination by Policyholder',
-                shortExplanation: 'Allows policyholders to nominate beneficiaries for policy proceeds.',
-                tags: ['Nomination', 'Claim Settlement'],
-                fullText: 'The policyholder may nominate one or more persons to receive the policy proceeds in the event of death, subject to valid endorsement and insurer record updates.',
-                purpose: 'Ensures clear, lawful transfer of policy benefits without prolonged disputes.',
-                practicalNotes: 'Always verify nominee updates after marriage, childbirth, or estate planning changes.',
-                relatedSections: ['Section 38', 'Section 45']
+                actId: 'act_insurance_1938',
+                actName: 'Insurance Act',
+                year: '1938',
+                description: 'Core insurance legislation governing policy, claims, and insurer obligations.'
             },
             {
-                sectionNumber: 'Section 45',
-                title: 'Policy Cannot Be Called in Question',
-                shortExplanation: 'Restricts repudiation after a defined period except in proven fraud cases.',
-                tags: ['Claims', 'Fraud', 'Underwriting'],
-                fullText: 'After three years from issuance or revival, a life insurance policy cannot be questioned on grounds of misstatement except where fraud is established as per statutory tests.',
-                purpose: 'Balances consumer protection with anti-fraud controls for insurers.',
-                practicalNotes: 'Investigations must document materiality and intent when alleging fraud.',
-                relatedSections: ['Section 41', 'Section 47']
+                actId: 'act_irdai_1999',
+                actName: 'IRDAI Act',
+                year: '1999',
+                description: 'Establishes insurance regulatory authority and supervisory framework.'
             },
             {
-                sectionNumber: 'Section 64VA',
-                title: 'Maintaining Solvency Margin',
-                shortExplanation: 'Requires insurers to maintain solvency above the regulatory threshold.',
-                tags: ['Solvency', 'Regulatory'],
-                fullText: 'Every insurer must maintain excess assets over liabilities in line with prescribed solvency control levels and submit periodic compliance information.',
-                purpose: 'Protects policyholders by ensuring insurers remain financially sound.',
-                practicalNotes: 'Track solvency trends quarterly and flag sharp deterioration early.',
-                relatedSections: ['Section 14', 'IRDAI Solvency Norms']
+                actId: 'act_lic',
+                actName: 'LIC Act',
+                year: '',
+                description: 'Key provisions governing Life Insurance Corporation operations and obligations.'
+            },
+            {
+                actId: 'act_mv',
+                actName: 'Motor Vehicles Act',
+                year: '',
+                description: 'Relevant sections tied to compulsory motor insurance and claims.'
+            },
+            {
+                actId: 'act_companies',
+                actName: 'Companies Act',
+                year: '',
+                description: 'Insurance-related corporate governance and reporting requirements.'
             }
         ];
+        let insuranceProvisions = [];
+        let insuranceActiveActId = null;
+        let insuranceProvisionEditId = null;
+        let insuranceActEditId = null;
 
         const insuranceCompanies = [
             {
@@ -3522,8 +3620,41 @@ input:focus,textarea:focus,select:focus{
 
         const UI_STATE_STORAGE_KEY = 'tennis_ui_state';
 
+        function createInsuranceEntityId(prefix) {
+            return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+
+        function escapeInsuranceHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function splitCommaValues(raw) {
+            return String(raw || '')
+                .split(',')
+                .map(part => part.trim())
+                .filter(Boolean);
+        }
+
+        function joinCommaValues(values) {
+            return (values || []).join(', ');
+        }
+
+        function getInsuranceActiveAct() {
+            return insuranceActs.find(act => act.actId === insuranceActiveActId) || null;
+        }
+
+        function getInsuranceProvisionsForAct(actId) {
+            return insuranceProvisions.filter(provision => provision.actId === actId);
+        }
+
         function initializeInsuranceModule() {
-            renderInsuranceProvisions();
+            renderInsuranceActs();
+            openInsuranceActsScreen();
             renderInsuranceCompanies();
             renderInsuranceConcepts();
             renderInsuranceNotes();
@@ -3553,6 +3684,10 @@ input:focus,textarea:focus,select:focus{
             const target = document.getElementById(targetId);
             if (target) target.classList.add('active');
 
+            if (viewName === 'provisions') {
+                openInsuranceActsScreen();
+            }
+
             if (viewName === 'ai') {
                 setTimeout(() => {
                     const input = document.getElementById('insuranceChatInput');
@@ -3561,51 +3696,244 @@ input:focus,textarea:focus,select:focus{
             }
         }
 
-        function renderInsuranceProvisions() {
-            const listEl = document.getElementById('insuranceProvisionsList');
+        function openInsuranceActsScreen() {
+            insuranceActiveActId = null;
+            const actsScreen = document.getElementById('insuranceActsScreen');
+            const provisionsScreen = document.getElementById('insuranceActProvisionsScreen');
+            if (actsScreen) actsScreen.classList.add('active');
+            if (provisionsScreen) provisionsScreen.classList.remove('active');
+            renderInsuranceActs();
+        }
+
+        function openInsuranceActProvisions(actId) {
+            insuranceActiveActId = actId;
+            const actsScreen = document.getElementById('insuranceActsScreen');
+            const provisionsScreen = document.getElementById('insuranceActProvisionsScreen');
+            if (actsScreen) actsScreen.classList.remove('active');
+            if (provisionsScreen) provisionsScreen.classList.add('active');
+            renderInsuranceActProvisions();
+        }
+
+        function renderInsuranceActs() {
+            const listEl = document.getElementById('insuranceActsList');
             if (!listEl) return;
 
-            if (!insuranceProvisions.length) {
-                listEl.innerHTML = '<div class="insurance-data-muted">No provisions available.</div>';
+            if (!insuranceActs.length) {
+                listEl.innerHTML = '<div class="insurance-empty-state">No acts added yet. Click + Add Act to start.</div>';
                 return;
             }
 
-            listEl.innerHTML = insuranceProvisions.map((item, index) => `
-                <div class="insurance-data-card" onclick="openInsuranceProvisionDetail(${index})">
-                    <p class="insurance-data-muted" style="font-weight:700;color:#16a34a;margin-bottom:0.3rem;">${item.sectionNumber}</p>
-                    <h3 class="insurance-card-title" style="margin-bottom:0.45rem;">${item.title}</h3>
-                    <p class="insurance-card-desc">${item.shortExplanation}</p>
+            listEl.innerHTML = insuranceActs.map(act => {
+                const yearText = act.year ? `Year: ${escapeInsuranceHtml(act.year)}` : 'Year: —';
+                return `
+                    <div class="insurance-card" onclick="openInsuranceActProvisions('${escapeInsuranceHtml(act.actId)}')">
+                        <div class="insurance-card-icon">📘</div>
+                        <h3 class="insurance-card-title">${escapeInsuranceHtml(act.actName)}</h3>
+                        <p class="insurance-act-meta">${yearText}</p>
+                        <p class="insurance-card-desc">${escapeInsuranceHtml(act.description || 'No description')}</p>
+                        <div class="insurance-provision-actions">
+                            <button class="submit-btn btn-sm btn-muted" onclick="event.stopPropagation();openInsuranceActProvisions('${escapeInsuranceHtml(act.actId)}')">Open</button>
+                            <button class="submit-btn btn-sm" onclick="event.stopPropagation();editInsuranceAct('${escapeInsuranceHtml(act.actId)}')">Edit</button>
+                            <button class="submit-btn btn-sm btn-danger" onclick="event.stopPropagation();deleteInsuranceAct('${escapeInsuranceHtml(act.actId)}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderInsuranceActProvisions() {
+            const activeAct = getInsuranceActiveAct();
+            const titleEl = document.getElementById('insuranceActiveActTitle');
+            const descEl = document.getElementById('insuranceActiveActDescription');
+            const listEl = document.getElementById('insuranceActProvisionsList');
+
+            if (!titleEl || !descEl || !listEl) return;
+            if (!activeAct) {
+                titleEl.textContent = 'Act';
+                descEl.textContent = '';
+                listEl.innerHTML = '';
+                return;
+            }
+
+            titleEl.textContent = activeAct.year ? `${activeAct.actName} ${activeAct.year}` : activeAct.actName;
+            descEl.textContent = activeAct.description || '';
+
+            const provisions = getInsuranceProvisionsForAct(activeAct.actId);
+            if (!provisions.length) {
+                listEl.innerHTML = '<div class="insurance-empty-state">No provisions added for this act. Click + Add Provision.</div>';
+                return;
+            }
+
+            listEl.innerHTML = provisions.map(item => `
+                <div class="insurance-data-card insurance-provision-card">
+                    <p class="insurance-data-muted" style="font-weight:700;color:#16a34a;margin-bottom:0.3rem;">${escapeInsuranceHtml(item.sectionNumber)}</p>
+                    <h3 class="insurance-card-title" style="margin-bottom:0.45rem;">${escapeInsuranceHtml(item.sectionTitle)}</h3>
                     <div class="insurance-tags">
-                        ${(item.tags || []).map(tag => `<span class="insurance-tag">${tag}</span>`).join('')}
+                        ${(item.tags || []).map(tag => `<span class="insurance-tag">${escapeInsuranceHtml(tag)}</span>`).join('')}
+                    </div>
+                    <div class="insurance-provision-actions">
+                        <button class="submit-btn btn-sm btn-muted" onclick="viewInsuranceProvisionDetails('${escapeInsuranceHtml(item.provisionId)}')">View</button>
+                        <button class="submit-btn btn-sm" onclick="editInsuranceProvision('${escapeInsuranceHtml(item.provisionId)}')">Edit</button>
+                        <button class="submit-btn btn-sm btn-danger" onclick="deleteInsuranceProvision('${escapeInsuranceHtml(item.provisionId)}')">Delete</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function openInsuranceProvisionDetail(index) {
-            const item = insuranceProvisions[index];
+        function viewInsuranceProvisionDetails(provisionId) {
+            const item = insuranceProvisions.find(provision => provision.provisionId === provisionId);
             if (!item) return;
+
+            const tagsHtml = (item.tags || []).map(tag => `<span class="insurance-tag">${escapeInsuranceHtml(tag)}</span>`).join('');
+            const relatedHtml = (item.relatedSections || []).map(section => `<span class="insurance-tag">${escapeInsuranceHtml(section)}</span>`).join('');
             const content = `
                 <div class="insurance-detail-grid">
                     <div>
-                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Full Text</h3>
-                        <p class="insurance-data-muted">${item.fullText}</p>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Section Number</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.sectionNumber)}</p>
                     </div>
                     <div>
-                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Purpose</h3>
-                        <p class="insurance-data-muted">${item.purpose}</p>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Section Title</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.sectionTitle)}</p>
                     </div>
                     <div>
-                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Practical Notes</h3>
-                        <p class="insurance-data-muted">${item.practicalNotes}</p>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Section Text</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.sectionText)}</p>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Plain Explanation</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.plainExplanation)}</p>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Purpose of Section</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.purposeOfSection)}</p>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Supervisory Focus Areas</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.supervisoryFocusAreas)}</p>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Practical Examples</h3>
+                        <p class="insurance-data-muted">${escapeInsuranceHtml(item.practicalExamples)}</p>
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Tags</h3>
+                        <div class="insurance-tags">${tagsHtml || '<span class="insurance-data-muted">—</span>'}</div>
                     </div>
                     <div>
                         <h3 style="margin:0 0 0.4rem 0;color:#0f2540;">Related Sections</h3>
-                        <div class="insurance-tags">${(item.relatedSections || []).map(sec => `<span class="insurance-tag">${sec}</span>`).join('')}</div>
+                        <div class="insurance-tags">${relatedHtml || '<span class="insurance-data-muted">—</span>'}</div>
                     </div>
                 </div>
             `;
-            openInsuranceDetailModal(`${item.sectionNumber} — ${item.title}`, content);
+            openInsuranceDetailModal(`${item.sectionNumber} — ${item.sectionTitle}`, content);
+        }
+
+        function openInsuranceAddActModal(actId = null) {
+            insuranceActEditId = actId;
+            const modal = document.getElementById('insuranceAddActModal');
+            const titleEl = document.getElementById('insuranceActFormTitle');
+            const saveBtn = document.getElementById('insuranceActSaveBtn');
+            if (!modal) return;
+
+            const targetAct = insuranceActs.find(act => act.actId === insuranceActEditId);
+            const isEdit = !!targetAct;
+
+            if (titleEl) titleEl.textContent = isEdit ? 'Edit Act' : 'Add Act';
+            if (saveBtn) saveBtn.textContent = isEdit ? 'Update Act' : 'Save Act';
+
+            document.getElementById('insuranceNewActName').value = targetAct?.actName || '';
+            document.getElementById('insuranceNewActYear').value = targetAct?.year || '';
+            document.getElementById('insuranceNewActDescription').value = targetAct?.description || '';
+
+            const modalBox = modal.querySelector('.insurance-modal-box');
+            if (modalBox) modalBox.scrollTop = 0;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInsuranceAddActModal() {
+            const modal = document.getElementById('insuranceAddActModal');
+            if (modal) modal.classList.remove('active');
+            insuranceActEditId = null;
+            document.body.style.overflow = 'auto';
+        }
+
+        function saveInsuranceAct() {
+            const actName = document.getElementById('insuranceNewActName')?.value.trim() || '';
+            const year = document.getElementById('insuranceNewActYear')?.value.trim() || '';
+            const description = document.getElementById('insuranceNewActDescription')?.value.trim() || '';
+
+            if (!actName) {
+                alert('Please enter Act Name.');
+                return;
+            }
+
+            const existingAct = insuranceActs.find(act => act.actId === insuranceActEditId);
+            if (existingAct) {
+                existingAct.actName = actName;
+                existingAct.year = year;
+                existingAct.description = description;
+            } else {
+                insuranceActs.unshift({
+                    actId: createInsuranceEntityId('act'),
+                    actName,
+                    year,
+                    description
+                });
+            }
+
+            renderInsuranceActs();
+            if (insuranceActiveActId && insuranceActEditId && insuranceActiveActId === insuranceActEditId) {
+                renderInsuranceActProvisions();
+            }
+            closeInsuranceAddActModal();
+            document.getElementById('insuranceNewActName').value = '';
+            document.getElementById('insuranceNewActYear').value = '';
+            document.getElementById('insuranceNewActDescription').value = '';
+        }
+
+        function editInsuranceAct(actId) {
+            openInsuranceAddActModal(actId);
+        }
+
+        function deleteInsuranceAct(actId) {
+            const targetAct = insuranceActs.find(act => act.actId === actId);
+            if (!targetAct) return;
+
+            const relatedCount = getInsuranceProvisionsForAct(actId).length;
+            const confirmationText = relatedCount
+                ? `Delete act ${targetAct.actName}${targetAct.year ? ` ${targetAct.year}` : ''}? This will also delete ${relatedCount} provision(s).`
+                : `Delete act ${targetAct.actName}${targetAct.year ? ` ${targetAct.year}` : ''}?`;
+
+            if (!confirm(confirmationText)) return;
+
+            insuranceActs = insuranceActs.filter(act => act.actId !== actId);
+            insuranceProvisions = insuranceProvisions.filter(provision => provision.actId !== actId);
+
+            if (insuranceActiveActId === actId) {
+                openInsuranceActsScreen();
+            } else {
+                renderInsuranceActs();
+            }
+
+            closeInsuranceDetailModal();
+        }
+
+        function editInsuranceProvision(provisionId) {
+            openInsuranceProvisionFormModal(provisionId);
+        }
+
+        function deleteInsuranceProvision(provisionId) {
+            const targetProvision = insuranceProvisions.find(item => item.provisionId === provisionId);
+            if (!targetProvision) return;
+
+            const confirmed = confirm(`Delete provision ${targetProvision.sectionNumber} — ${targetProvision.sectionTitle}?`);
+            if (!confirmed) return;
+
+            insuranceProvisions = insuranceProvisions.filter(item => item.provisionId !== provisionId);
+            renderInsuranceActProvisions();
+            closeInsuranceDetailModal();
         }
 
         function renderInsuranceCompanies() {
@@ -3709,45 +4037,100 @@ input:focus,textarea:focus,select:focus{
             document.body.style.overflow = 'auto';
         }
 
-        function openInsuranceProvisionFormModal() {
+        function openInsuranceProvisionFormModal(provisionId = null) {
+            if (!insuranceActiveActId) {
+                alert('Select an Act before adding a provision.');
+                return;
+            }
+
+            insuranceProvisionEditId = provisionId;
             const modal = document.getElementById('insuranceProvisionFormModal');
-            if (!modal) return;
+            const titleEl = document.getElementById('insuranceProvisionFormTitle');
+            if (!modal || !titleEl) return;
+
+            const provision = insuranceProvisions.find(item => item.provisionId === insuranceProvisionEditId);
+            const isEdit = !!provision;
+            titleEl.textContent = isEdit ? 'Edit Provision' : 'Add Provision';
+
+            document.getElementById('insuranceProvisionSectionNumber').value = provision?.sectionNumber || '';
+            document.getElementById('insuranceProvisionSectionTitle').value = provision?.sectionTitle || '';
+            document.getElementById('insuranceProvisionSectionText').value = provision?.sectionText || '';
+            document.getElementById('insuranceProvisionPlainExplanation').value = provision?.plainExplanation || '';
+            document.getElementById('insuranceProvisionPurpose').value = provision?.purposeOfSection || '';
+            document.getElementById('insuranceProvisionTags').value = joinCommaValues(provision?.tags || []);
+            document.getElementById('insuranceProvisionRelatedSections').value = joinCommaValues(provision?.relatedSections || []);
+            document.getElementById('insuranceProvisionSupervisoryFocusAreas').value = provision?.supervisoryFocusAreas || '';
+            document.getElementById('insuranceProvisionPracticalExamples').value = provision?.practicalExamples || '';
+
+            const modalBox = modal.querySelector('.insurance-modal-box');
+            if (modalBox) modalBox.scrollTop = 0;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            const firstInput = document.getElementById('insuranceProvisionSectionNumber');
+            if (firstInput) firstInput.focus();
         }
 
         function closeInsuranceProvisionFormModal() {
             const modal = document.getElementById('insuranceProvisionFormModal');
             if (modal) modal.classList.remove('active');
+            insuranceProvisionEditId = null;
             document.body.style.overflow = 'auto';
         }
 
-        function saveInsuranceProvisionDummy() {
-            const sectionNumber = document.getElementById('insuranceNewProvisionSection')?.value.trim() || '';
-            const title = document.getElementById('insuranceNewProvisionTitle')?.value.trim() || '';
-            const shortExplanation = document.getElementById('insuranceNewProvisionExplanation')?.value.trim() || '';
-
-            if (!sectionNumber || !title || !shortExplanation) {
-                alert('Please complete section number, title, and short explanation.');
+        function saveInsuranceProvision() {
+            if (!insuranceActiveActId) {
+                alert('Select an Act before saving a provision.');
                 return;
             }
 
-            insuranceProvisions.unshift({
-                sectionNumber,
-                title,
-                shortExplanation,
-                tags: ['Draft'],
-                fullText: shortExplanation,
-                purpose: 'Dummy provision saved for prototype flow.',
-                practicalNotes: 'Replace with validated legal summary during integration.',
-                relatedSections: []
-            });
+            const sectionNumber = document.getElementById('insuranceProvisionSectionNumber')?.value.trim() || '';
+            const sectionTitle = document.getElementById('insuranceProvisionSectionTitle')?.value.trim() || '';
+            const sectionText = document.getElementById('insuranceProvisionSectionText')?.value.trim() || '';
+            const plainExplanation = document.getElementById('insuranceProvisionPlainExplanation')?.value.trim() || '';
+            const purposeOfSection = document.getElementById('insuranceProvisionPurpose')?.value.trim() || '';
+            const tags = splitCommaValues(document.getElementById('insuranceProvisionTags')?.value || '');
+            const relatedSections = splitCommaValues(document.getElementById('insuranceProvisionRelatedSections')?.value || '');
+            const supervisoryFocusAreas = document.getElementById('insuranceProvisionSupervisoryFocusAreas')?.value.trim() || '';
+            const practicalExamples = document.getElementById('insuranceProvisionPracticalExamples')?.value.trim() || '';
 
-            renderInsuranceProvisions();
+            if (!sectionNumber || !sectionTitle || !sectionText) {
+                alert('Please complete Section Number, Section Title, and Section Text.');
+                return;
+            }
+
+            const existing = insuranceProvisions.find(item => item.provisionId === insuranceProvisionEditId);
+            if (existing) {
+                existing.sectionNumber = sectionNumber;
+                existing.sectionTitle = sectionTitle;
+                existing.sectionText = sectionText;
+                existing.plainExplanation = plainExplanation;
+                existing.purposeOfSection = purposeOfSection;
+                existing.tags = tags;
+                existing.relatedSections = relatedSections;
+                existing.supervisoryFocusAreas = supervisoryFocusAreas;
+                existing.practicalExamples = practicalExamples;
+                existing.updatedAt = new Date().toISOString();
+            } else {
+                insuranceProvisions.unshift({
+                    provisionId: createInsuranceEntityId('provision'),
+                    actId: insuranceActiveActId,
+                    sectionNumber,
+                    sectionTitle,
+                    sectionText,
+                    plainExplanation,
+                    purposeOfSection,
+                    tags,
+                    relatedSections,
+                    supervisoryFocusAreas,
+                    practicalExamples,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+
+            renderInsuranceActProvisions();
             closeInsuranceProvisionFormModal();
-            document.getElementById('insuranceNewProvisionSection').value = '';
-            document.getElementById('insuranceNewProvisionTitle').value = '';
-            document.getElementById('insuranceNewProvisionExplanation').value = '';
         }
 
         function openInsuranceNoteFormModal() {
@@ -3816,7 +4199,12 @@ input:focus,textarea:focus,select:focus{
             if (!text) return;
 
             insuranceChatMessages.push({ role: 'user', text });
-            insuranceChatMessages.push({ role: 'ai', text: 'Relevant Provision: Section 39 — Nomination by Policyholder. Consider checking nominee updates and claim documentation requirements.' });
+
+            const firstProvision = insuranceProvisions[0];
+            const aiText = firstProvision
+                ? `Relevant Provision: ${firstProvision.sectionNumber} — ${firstProvision.sectionTitle}. Review tags: ${(firstProvision.tags || []).join(', ') || 'none'}.`
+                : 'No provisions are saved yet. Add Acts and Provisions in the Act Provisions module for context-aware answers.';
+            insuranceChatMessages.push({ role: 'ai', text: aiText });
 
             input.value = '';
             renderInsuranceChatMessages();
@@ -3824,14 +4212,23 @@ input:focus,textarea:focus,select:focus{
 
         window.showInsuranceView = showInsuranceView;
         window.showInsuranceHome = showInsuranceHome;
-        window.openInsuranceProvisionDetail = openInsuranceProvisionDetail;
+        window.openInsuranceActsScreen = openInsuranceActsScreen;
+        window.openInsuranceActProvisions = openInsuranceActProvisions;
+        window.openInsuranceAddActModal = openInsuranceAddActModal;
+        window.closeInsuranceAddActModal = closeInsuranceAddActModal;
+        window.saveInsuranceAct = saveInsuranceAct;
+        window.editInsuranceAct = editInsuranceAct;
+        window.deleteInsuranceAct = deleteInsuranceAct;
+        window.viewInsuranceProvisionDetails = viewInsuranceProvisionDetails;
+        window.editInsuranceProvision = editInsuranceProvision;
+        window.deleteInsuranceProvision = deleteInsuranceProvision;
         window.openInsuranceCompanyDetail = openInsuranceCompanyDetail;
         window.openInsuranceNoteDetail = openInsuranceNoteDetail;
         window.openInsuranceDetailModal = openInsuranceDetailModal;
         window.closeInsuranceDetailModal = closeInsuranceDetailModal;
         window.openInsuranceProvisionFormModal = openInsuranceProvisionFormModal;
         window.closeInsuranceProvisionFormModal = closeInsuranceProvisionFormModal;
-        window.saveInsuranceProvisionDummy = saveInsuranceProvisionDummy;
+        window.saveInsuranceProvision = saveInsuranceProvision;
         window.openInsuranceNoteFormModal = openInsuranceNoteFormModal;
         window.closeInsuranceNoteFormModal = closeInsuranceNoteFormModal;
         window.saveInsuranceNoteDummy = saveInsuranceNoteDummy;
