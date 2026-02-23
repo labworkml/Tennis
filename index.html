@@ -2102,11 +2102,10 @@ input:focus,textarea:focus,select:focus{
 
 .insurance-analytics-controls{
     margin-top:1rem;
-    display:flex;
-    flex-wrap:nowrap;
-    gap:1rem;
-    align-items:stretch;
-    flex-direction:row;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
+    margin-bottom:20px;
 }
 
 .insurance-analytics-control-card{
@@ -2129,11 +2128,9 @@ input:focus,textarea:focus,select:focus{
 
 .insurance-analytics-main{
     margin-top:1rem;
-    display:flex;
-    flex-wrap:nowrap;
-    gap:1rem;
-    align-items:stretch;
-    flex-direction:row;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:20px;
 }
 
 .insurance-analytics-panel{
@@ -2141,8 +2138,6 @@ input:focus,textarea:focus,select:focus{
     min-height:420px;
     display:flex;
     flex-direction:column;
-    flex:1 1 0;
-    min-width:0;
 }
 
 .insurance-analytics-panel-title{
@@ -2275,11 +2270,9 @@ input:focus,textarea:focus,select:focus{
         border-radius:20px 20px 0 0;
         margin:0.5rem auto;
     }
-    .insurance-analytics-controls{
-        flex-direction:row;
-    }
+    .insurance-analytics-controls,
     .insurance-analytics-main{
-        flex-direction:row;
+        grid-template-columns:1fr;
     }
     .insurance-analytics-panel{
         min-height:unset;
@@ -2304,13 +2297,6 @@ input:focus,textarea:focus,select:focus{
     .insurance-data-table td{
         padding:0.55rem 0.45rem;
     }
-}
-
-#insuranceCompaniesView .insurance-analytics-controls,
-#insuranceCompaniesView .insurance-analytics-main{
-    display:flex !important;
-    flex-direction:row !important;
-    flex-wrap:nowrap !important;
 }
 
 </style>
