@@ -776,30 +776,11 @@ const mobileBottomNavConfig = {
         let insuranceActiveActId = null;
         let insuranceProvisionEditId = null;
         let insuranceActEditId = null;
+        let insurersDropdownLoaded = false;
+        let insurerPremiumChart = null;
+        let currentInsurerData = null;
 
-        const insuranceCompanies = [
-            {
-                name: 'SecureLife Insurance Co.',
-                type: 'Life',
-                solvencyRatio: '1.92',
-                notesPreview: 'Strong protection portfolio and stable persistency metrics.',
-                details: 'Focused on term and annuity products. Strong capital buffers and conservative investment book.'
-            },
-            {
-                name: 'Shield General Insurance Ltd.',
-                type: 'General',
-                solvencyRatio: '1.76',
-                notesPreview: 'Balanced motor-health mix with improving combined ratio.',
-                details: 'Expanding digital claims operations; underwriting discipline improved over last four quarters.'
-            },
-            {
-                name: 'Harbor Risk Assurance',
-                type: 'General',
-                solvencyRatio: '1.58',
-                notesPreview: 'Commercial lines specialist with selective growth strategy.',
-                details: 'Strong reinsurance framework and robust catastrophe reserving methodology.'
-            }
-        ];
+        const insuranceCompanies = [];
 
         const insuranceConcepts = [
             {
@@ -882,6 +863,7 @@ const mobileBottomNavConfig = {
             renderInsuranceActs();
             openInsuranceActsScreen();
             renderInsuranceCompanies();
+            loadInsurersDropdown();
             renderInsuranceConcepts();
             renderInsuranceNotes();
             renderInsuranceChatMessages();
@@ -912,6 +894,10 @@ const mobileBottomNavConfig = {
 
             if (viewName === 'provisions') {
                 openInsuranceActsScreen();
+            }
+
+            if (viewName === 'companies') {
+                loadInsurersDropdown();
             }
 
             if (viewName === 'ai') {
@@ -1184,9 +1170,456 @@ const mobileBottomNavConfig = {
             closeInsuranceDetailModal();
         }
 
+        function formatInsurerDate(value) {
+            if (!value) return 'â€”';
+
+            if (typeof value === 'string') {
+                return value;
+            }
+
+            if (value && typeof value.toDate === 'function') {
+                return value.toDate().toLocaleDateString('en-GB');
+            }
+
+            if (value && typeof value.seconds === 'number') {
+                return new Date(value.seconds * 1000).toLocaleDateString('en-GB');
+            }
+
+            return String(value);
+        }
+
+        function normalizePremiumData(premiumData) {
+            if (!premiumData || typeof premiumData !== 'object') {
+                return [];
+            }
+
+            const yearKeys = Object.keys(premiumData)
+                .filter(key => /^\d{4}$/.test(String(key)))
+                .map(key => Number(key))
+                .sort((a, b) => a - b);
+
+            if (!yearKeys.length) {
+                return [];
+            }
+
+            const startYear = yearKeys[0];
+            const endYear = yearKeys[yearKeys.length - 1];
+            const rows = [];
+
+            for (let year = startYear; year <= endYear; year += 1) {
+                const rawValue = premiumData[String(year)] ?? premiumData[year] ?? 0;
+                const numericValue = Number(rawValue);
+                rows.push({
+                    year,
+                    premium: Number.isFinite(numericValue) ? numericValue : 0
+                });
+            }
+
+            return rows;
+        }
+
+        function formatPremiumValue(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return '0.00';
+            return numeric.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function renderLeftPanelHtml(contentHtml) {
+            const panelEl = document.getElementById('insuranceLeftPanelContent');
+            if (!panelEl) return;
+            panelEl.innerHTML = contentHtml;
+        }
+
+        function showSection(sectionName) {
+            const section = String(sectionName || '').toLowerCase();
+            if (section === 'basic') {
+                if (currentInsurerData) {
+                    renderBasicInfo(currentInsurerData);
+                } else {
+                    renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+                }
+                showPlaceholder('Select Total Premium to view trend chart');
+                return;
+            }
+
+            if (section === 'total_premium') {
+                if (currentInsurerData) {
+                    renderPremiumTable(currentInsurerData.total_premium || {});
+                    renderPremiumChart(currentInsurerData.total_premium || {});
+                } else {
+                    renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+                    showPlaceholder('Select an insurer to view analytics');
+                }
+                return;
+            }
+
+            renderLeftPanelHtml('<p class="insurance-data-muted">Select information type to view data.</p>');
+            showPlaceholder('Select information type to view visualization');
+        }
+
+        async function onInsurerChange(regNo) {
+            const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+
+            if (infoTypeSelectEl) {
+                infoTypeSelectEl.value = '';
+                infoTypeSelectEl.disabled = !regNo;
+            }
+
+            if (!regNo) {
+                currentInsurerData = null;
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+                showPlaceholder('Select an insurer to view analytics');
+                return;
+            }
+
+            renderLeftPanelHtml('<p class="insurance-data-muted">Loading insurer details...</p>');
+            showPlaceholder('Select information type to view visualization');
+            await loadInsurerData(regNo);
+
+            if (!currentInsurerData) {
+                renderBasicInfo({ __error: 'Unable to load insurer details. Please try again.' });
+                showPlaceholder('Select an insurer to view analytics');
+                return;
+            }
+
+            renderLeftPanelHtml('<p class="insurance-data-muted">Select information type to view data.</p>');
+        }
+
+        function onInfoTypeChange() {
+            const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+            const selectedInfoType = infoTypeSelectEl?.value || '';
+
+            if (!selectedInfoType) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select information type to view data.</p>');
+                showPlaceholder('Select information type to view visualization');
+                return;
+            }
+
+            showSection(selectedInfoType);
+        }
+
+        function showPlaceholder(message = 'Select an insurer to view analytics') {
+            const canvas = document.getElementById('insurancePremiumChartCanvas');
+            const messageEl = document.getElementById('insurancePremiumChartMessage');
+
+            if (insurerPremiumChart) {
+                insurerPremiumChart.destroy();
+                insurerPremiumChart = null;
+            }
+
+            if (messageEl) messageEl.textContent = message;
+            if (canvas) canvas.style.display = 'none';
+        }
+
+        function renderBasicInfo(data) {
+            if (!data) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+                return;
+            }
+
+            if (data.__loading) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">Loading insurer details...</p>');
+                return;
+            }
+
+            if (data.__empty) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">No insurers are available in the master collection.</p>');
+                return;
+            }
+
+            if (data.__error) {
+                renderLeftPanelHtml(`<p class="insurance-data-muted">${escapeInsuranceHtml(data.__error)}</p>`);
+                return;
+            }
+
+            renderLeftPanelHtml(`
+                <h3 class="insurance-premium-title">Basic Information</h3>
+                <table class="insurance-data-table insurance-insurer-table">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Insurer Name</td>
+                            <td>${escapeInsuranceHtml(data.insurer_name)}</td>
+                        </tr>
+                        <tr>
+                            <td>Registration Number</td>
+                            <td>${escapeInsuranceHtml(data.reg_no)}</td>
+                        </tr>
+                        <tr>
+                            <td>Sector</td>
+                            <td>${escapeInsuranceHtml(data.sector)}</td>
+                        </tr>
+                        <tr>
+                            <td>Category</td>
+                            <td>${escapeInsuranceHtml(data.category)}</td>
+                        </tr>
+                        <tr>
+                            <td>Date of Registration</td>
+                            <td>${escapeInsuranceHtml(data.date_of_registration)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `);
+        }
+
+        function renderPremiumTable(premiumData) {
+            const rows = normalizePremiumData(premiumData);
+            if (!rows.length) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">No premium data available for this insurer.</p>');
+                return;
+            }
+
+            renderLeftPanelHtml(`
+                <h3 class="insurance-premium-title">Total Premium (₹ Crore)</h3>
+                <table class="insurance-data-table insurance-premium-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Total Premium</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                <td>${row.year}</td>
+                                <td>₹ ${formatPremiumValue(row.premium)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `);
+        }
+
+        function renderPremiumChart(premiumData) {
+            const canvas = document.getElementById('insurancePremiumChartCanvas');
+            const messageEl = document.getElementById('insurancePremiumChartMessage');
+            if (!canvas) return;
+
+            if (insurerPremiumChart) {
+                insurerPremiumChart.destroy();
+                insurerPremiumChart = null;
+            }
+
+            const rows = normalizePremiumData(premiumData);
+            if (!rows.length) {
+                showPlaceholder('No premium trend data available for this insurer.');
+                return;
+            }
+
+            if (typeof window.Chart !== 'function') {
+                showPlaceholder('Chart library is not available.');
+                return;
+            }
+
+            if (messageEl) messageEl.textContent = '';
+            canvas.style.display = 'block';
+
+            const labels = rows.map(row => String(row.year));
+            const values = rows.map(row => row.premium);
+
+            insurerPremiumChart = new window.Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Total Premium (₹ Crore)',
+                        data: values,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `₹ ${formatPremiumValue(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Years'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.18)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Premium'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.18)'
+                            },
+                            ticks: {
+                                callback: value => `₹ ${Number(value).toLocaleString('en-IN')}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadInsurersDropdown() {
+            const dropdownEl = document.getElementById('insuranceInsurerSelect');
+            const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+            if (!dropdownEl) return;
+
+            currentInsurerData = null;
+            if (infoTypeSelectEl) {
+                infoTypeSelectEl.value = '';
+                infoTypeSelectEl.disabled = true;
+            }
+            renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+            showPlaceholder('Select an insurer to view analytics');
+
+            if (!window.db || !window.collection || !window.getDocs) {
+                dropdownEl.innerHTML = '<option value="">Unable to load insurers</option>';
+                dropdownEl.disabled = true;
+                renderBasicInfo({ __error: 'Firestore is not available right now.' });
+                return;
+            }
+
+            if (insurersDropdownLoaded && dropdownEl.options.length > 1) {
+                return;
+            }
+
+            dropdownEl.disabled = true;
+            dropdownEl.innerHTML = '<option value="">Loading insurers...</option>';
+            renderLeftPanelHtml('<p class="insurance-data-muted">Loading insurers...</p>');
+            showPlaceholder('Select an insurer to view analytics');
+
+            try {
+                const snapshot = await window.getDocs(window.collection(window.db, 'insurers_master'));
+                const insurers = [];
+
+                snapshot.forEach(docSnap => {
+                    const row = docSnap.data() || {};
+                    insurers.push({
+                        reg_no: docSnap.id,
+                        insurer_name: row.insurer_name || '',
+                        sector: row.sector || '',
+                        category: row.category || '',
+                        date_of_registration: row.date_of_registration || ''
+                    });
+                });
+
+                insurers.sort((a, b) => String(a.insurer_name || '').localeCompare(String(b.insurer_name || '')));
+
+                if (!insurers.length) {
+                    dropdownEl.innerHTML = '<option value="">No insurers found</option>';
+                    dropdownEl.disabled = true;
+                    renderBasicInfo({ __empty: true });
+                    showPlaceholder('Select an insurer to view analytics');
+                    insurersDropdownLoaded = true;
+                    return;
+                }
+
+                dropdownEl.innerHTML = [
+                    '<option value="">Select an insurer to view details</option>',
+                    ...insurers.map(item => `<option value="${escapeInsuranceHtml(item.reg_no)}">${escapeInsuranceHtml(item.insurer_name || item.reg_no)}</option>`)
+                ].join('');
+                dropdownEl.disabled = false;
+                insurersDropdownLoaded = true;
+            } catch (error) {
+                console.error('Error loading insurers dropdown:', error?.code || error?.message || error);
+                const errorCode = String(error?.code || '').toLowerCase();
+                let userMessage = 'Unable to load insurer list. Please try again.';
+
+                if (errorCode.includes('permission-denied')) {
+                    userMessage = 'Unable to load insurer list. Firestore permission denied for insurers_master read/list.';
+                } else if (errorCode.includes('unavailable')) {
+                    userMessage = 'Unable to load insurer list. Firestore service is temporarily unavailable.';
+                }
+
+                dropdownEl.innerHTML = '<option value="">Failed to load insurers</option>';
+                dropdownEl.disabled = true;
+                renderBasicInfo({ __error: userMessage });
+                showPlaceholder('Select an insurer to view analytics');
+            }
+        }
+
+        async function loadInsurerData(regNo) {
+            if (!regNo) {
+                currentInsurerData = null;
+                return;
+            }
+
+            if (!window.db || !window.doc || !window.getDoc) {
+                currentInsurerData = null;
+                return;
+            }
+
+            try {
+                const docRef = window.doc(window.db, 'insurers_master', regNo);
+                const docSnap = await window.getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    currentInsurerData = null;
+                    return;
+                }
+
+                const row = docSnap.data() || {};
+
+                currentInsurerData = {
+                    insurer_name: row.insurer_name || 'â€”',
+                    reg_no: row.reg_no || docSnap.id,
+                    sector: row.sector || 'â€”',
+                    category: row.category || 'â€”',
+                    date_of_registration: formatInsurerDate(row.date_of_registration),
+                    total_premium: row.total_premium || {}
+                };
+            } catch (error) {
+                console.error('Error loading insurer data:', error);
+                currentInsurerData = null;
+            }
+        }
+
+        async function fetchInsurerDetails(regNo) {
+            await loadInsurerData(regNo);
+        }
+
+        function renderInsurerDetails(data) {
+            renderBasicInfo(data);
+        }
+
         function renderInsuranceCompanies() {
             const listEl = document.getElementById('insuranceCompaniesList');
             if (!listEl) return;
+
+            if (!insuranceCompanies.length) {
+                listEl.innerHTML = '';
+                listEl.style.display = 'none';
+                return;
+            }
+
+            listEl.style.display = 'grid';
 
             listEl.innerHTML = insuranceCompanies.map((company, index) => `
                 <div class="insurance-data-card" onclick="openInsuranceCompanyDetail(${index})">
@@ -1476,6 +1909,17 @@ const mobileBottomNavConfig = {
         window.openInsuranceNoteFormModal = openInsuranceNoteFormModal;
         window.closeInsuranceNoteFormModal = closeInsuranceNoteFormModal;
         window.saveInsuranceNoteDummy = saveInsuranceNoteDummy;
+        window.loadInsurersDropdown = loadInsurersDropdown;
+        window.loadInsurerData = loadInsurerData;
+        window.onInsurerChange = onInsurerChange;
+        window.onInfoTypeChange = onInfoTypeChange;
+        window.showSection = showSection;
+        window.showPlaceholder = showPlaceholder;
+        window.fetchInsurerDetails = fetchInsurerDetails;
+        window.renderBasicInfo = renderBasicInfo;
+        window.renderInsurerDetails = renderInsurerDetails;
+        window.renderPremiumTable = renderPremiumTable;
+        window.renderPremiumChart = renderPremiumChart;
         window.sendInsuranceChatMessage = sendInsuranceChatMessage;
 
         function getPersistedUIState() {

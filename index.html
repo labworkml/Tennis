@@ -2099,6 +2099,169 @@ input:focus,textarea:focus,select:focus{
     font-size:2.35rem;
 }
 
+
+.insurance-analytics-controls{
+    margin-top:1rem;
+    display:flex;
+    flex-wrap:nowrap;
+    gap:1rem;
+    align-items:stretch;
+    flex-direction:row;
+}
+
+.insurance-analytics-control-card{
+    cursor:default;
+    flex:1 1 0;
+    min-width:0;
+}
+
+.insurance-analytics-control-card label{
+    display:block;
+    font-weight:600;
+    color:#0f2540;
+    margin-bottom:0.45rem;
+}
+
+.insurance-analytics-control-card select{
+    width:100%;
+    margin:0;
+}
+
+.insurance-analytics-main{
+    margin-top:1rem;
+    display:flex;
+    flex-wrap:nowrap;
+    gap:1rem;
+    align-items:stretch;
+    flex-direction:row;
+}
+
+.insurance-analytics-panel{
+    cursor:default;
+    min-height:420px;
+    display:flex;
+    flex-direction:column;
+    flex:1 1 0;
+    min-width:0;
+}
+
+.insurance-analytics-panel-title{
+    margin:0 0 0.75rem 0;
+    color:#0f2540;
+    font-size:1.1rem;
+    font-weight:700;
+}
+
+.insurance-hidden{
+    display:none !important;
+}
+
+.insurance-premium-title{
+    margin:0 0 0.65rem 0;
+    color:#0f2540;
+    font-size:1.05rem;
+    font-weight:700;
+}
+
+.insurance-data-table{
+    width:100%;
+    border-collapse:collapse;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.insurance-data-table thead{
+    background:linear-gradient(180deg,#f8fafc,#f1f5f9);
+}
+
+.insurance-data-table th,
+.insurance-data-table td{
+    padding:0.7rem 0.65rem;
+    border-bottom:1px solid #e6edf5;
+    text-align:left;
+    vertical-align:top;
+    font-size:0.95rem;
+}
+
+.insurance-data-table th{
+    color:#334155;
+    font-weight:700;
+}
+
+.insurance-data-table td{
+    color:#475569;
+}
+
+.insurance-data-table tbody tr:nth-child(even){
+    background:#fbfdff;
+}
+
+.insurance-data-table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.insurance-premium-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.insurance-premium-table th,
+.insurance-premium-table td{
+    padding:0.62rem 0.35rem;
+    border-bottom:1px solid #e6edf5;
+    text-align:left;
+}
+
+.insurance-premium-table th{
+    color:#334155;
+    font-weight:700;
+}
+
+.insurance-premium-table td{
+    color:#475569;
+}
+
+.insurance-premium-table td:last-child,
+.insurance-premium-table th:last-child{
+    text-align:right;
+}
+
+.insurance-premium-chart-wrap{
+    min-height:340px;
+    position:relative;
+    flex:1;
+}
+
+.insurance-premium-chart-canvas{
+    width:100% !important;
+    height:100% !important;
+    max-height:360px;
+}
+
+.insurance-insurer-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.insurance-insurer-table th,
+.insurance-insurer-table td{
+    padding:0.65rem 0.35rem;
+    border-bottom:1px solid #e6edf5;
+    text-align:left;
+    vertical-align:top;
+}
+
+.insurance-insurer-table th{
+    width:240px;
+    color:#334155;
+    font-weight:700;
+}
+
+.insurance-insurer-table td{
+    color:#475569;
+}
+
 @media (max-width: 768px) {
     .insurance-grid{
         grid-template-columns:1fr;
@@ -2112,6 +2275,42 @@ input:focus,textarea:focus,select:focus{
         border-radius:20px 20px 0 0;
         margin:0.5rem auto;
     }
+    .insurance-analytics-controls{
+        flex-direction:row;
+    }
+    .insurance-analytics-main{
+        flex-direction:row;
+    }
+    .insurance-analytics-panel{
+        min-height:unset;
+    }
+    .insurance-insurer-table th,
+    .insurance-insurer-table td{
+        display:block;
+        width:100%;
+        border-bottom:none;
+        padding:0.3rem 0;
+    }
+    .insurance-insurer-table tr{
+        display:block;
+        padding:0.5rem 0;
+        border-bottom:1px solid #e6edf5;
+    }
+    .insurance-premium-table th,
+    .insurance-premium-table td{
+        padding:0.5rem 0.25rem;
+    }
+    .insurance-data-table th,
+    .insurance-data-table td{
+        padding:0.55rem 0.45rem;
+    }
+}
+
+#insuranceCompaniesView .insurance-analytics-controls,
+#insuranceCompaniesView .insurance-analytics-main{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
 }
 
 </style>
@@ -2245,7 +2444,7 @@ input:focus,textarea:focus,select:focus{
                             </div>
                             <div class="insurance-card" onclick="showInsuranceView('companies')">
                                 <div class="insurance-card-icon">📊</div>
-                                <h3 class="insurance-card-title">Insurance Companies - Financials</h3>
+                                <h3 class="insurance-card-title">Insurance Handbook Statistics</h3>
                                 <p class="insurance-card-desc">Review insurer type, solvency profile, and financial notes for quick analysis.</p>
                             </div>
                             <div class="insurance-card" onclick="showInsuranceView('notes')">
@@ -2288,7 +2487,43 @@ input:focus,textarea:focus,select:focus{
                         <div class="insurance-section-header">
                             <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
                         </div>
-                        <h1>Insurance Companies - Financials</h1>
+                        <h1>Insurance Handbook Statistics</h1>
+
+                        <div class="insurance-analytics-controls">
+                            <div class="insurance-data-card insurance-analytics-control-card">
+                                <label for="insuranceInsurerSelect">Select Insurer</label>
+                                <select id="insuranceInsurerSelect" onchange="onInsurerChange(this.value)">
+                                    <option value="">Loading insurers...</option>
+                                </select>
+                            </div>
+
+                            <div class="insurance-data-card insurance-analytics-control-card">
+                                <label for="insuranceInfoTypeSelect">Select Information</label>
+                                <select id="insuranceInfoTypeSelect" onchange="onInfoTypeChange()" disabled>
+                                    <option value="">Choose information type</option>
+                                    <option value="basic">Basic Info</option>
+                                    <option value="total_premium">Total Premium</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="insurance-analytics-main">
+                            <div class="insurance-data-card insurance-analytics-panel">
+                                <h3 class="insurance-analytics-panel-title">Data Panel</h3>
+                                <div id="insuranceLeftPanelContent">
+                                    <p class="insurance-data-muted">Select an insurer to view analytics.</p>
+                                </div>
+                            </div>
+
+                            <div class="insurance-data-card insurance-analytics-panel">
+                                <h3 class="insurance-analytics-panel-title">Visualization Panel</h3>
+                                <div id="insurancePremiumChartWrap" class="insurance-premium-chart-wrap">
+                                    <p id="insurancePremiumChartMessage" class="insurance-data-muted">Select an insurer to view analytics.</p>
+                                    <canvas id="insurancePremiumChartCanvas" class="insurance-premium-chart-canvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="insuranceCompaniesList" class="insurance-grid"></div>
                     </div>
 
@@ -3677,27 +3912,7 @@ input:focus,textarea:focus,select:focus{
         let insuranceActEditId = null;
 
         const insuranceCompanies = [
-            {
-                name: 'SecureLife Insurance Co.',
-                type: 'Life',
-                solvencyRatio: '1.92',
-                notesPreview: 'Strong protection portfolio and stable persistency metrics.',
-                details: 'Focused on term and annuity products. Strong capital buffers and conservative investment book.'
-            },
-            {
-                name: 'Shield General Insurance Ltd.',
-                type: 'General',
-                solvencyRatio: '1.76',
-                notesPreview: 'Balanced motor-health mix with improving combined ratio.',
-                details: 'Expanding digital claims operations; underwriting discipline improved over last four quarters.'
-            },
-            {
-                name: 'Harbor Risk Assurance',
-                type: 'General',
-                solvencyRatio: '1.58',
-                notesPreview: 'Commercial lines specialist with selective growth strategy.',
-                details: 'Strong reinsurance framework and robust catastrophe reserving methodology.'
-            }
+            
         ];
 
         const insuranceConcepts = [
@@ -7704,6 +7919,7 @@ function openMobilityCalendarDetail(dateStr) {
 window.initMobilityCalendar = initMobilityCalendar;
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/app.js"></script>
 <script src="js/modules/tennis.js"></script>
 <script src="js/modules/ai.js"></script>
