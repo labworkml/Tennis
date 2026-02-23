@@ -779,6 +779,11 @@ const mobileBottomNavConfig = {
         let insurersDropdownLoaded = false;
         let insurerPremiumChart = null;
         let currentInsurerData = null;
+        let insuranceHandbookCategory = null;
+        let moduleAccessState = {
+            insuranceOnlyUser: false,
+            allowedModules: null
+        };
 
         const insuranceCompanies = [];
 
@@ -875,6 +880,56 @@ const mobileBottomNavConfig = {
             showInsuranceView('home');
         }
 
+        function getInsuranceHandbookCategoryLabel(category) {
+            const labels = {
+                life: 'Life',
+                general: 'General',
+                health: 'Health',
+                reinsurance: 'Reinsurance',
+                intermediaries: 'Intermediaries'
+            };
+            return labels[String(category || '').toLowerCase()] || 'Module';
+        }
+
+        function showInsuranceHandbookCategories() {
+            insuranceHandbookCategory = null;
+
+            const grid = document.getElementById('insuranceHandbookCategoryGrid');
+            const lifeView = document.getElementById('insuranceHandbookLifeView');
+            const placeholderView = document.getElementById('insuranceHandbookPlaceholderView');
+
+            if (grid) grid.style.display = 'grid';
+            if (lifeView) lifeView.style.display = 'none';
+            if (placeholderView) placeholderView.style.display = 'none';
+        }
+
+        function showInsuranceHandbookCategory(category) {
+            insuranceHandbookCategory = String(category || '').toLowerCase();
+
+            const grid = document.getElementById('insuranceHandbookCategoryGrid');
+            const lifeView = document.getElementById('insuranceHandbookLifeView');
+            const placeholderView = document.getElementById('insuranceHandbookPlaceholderView');
+
+            if (grid) grid.style.display = 'none';
+
+            if (insuranceHandbookCategory === 'life') {
+                if (lifeView) lifeView.style.display = 'block';
+                if (placeholderView) placeholderView.style.display = 'none';
+                loadInsurersDropdown();
+                return;
+            }
+
+            if (lifeView) lifeView.style.display = 'none';
+            if (placeholderView) placeholderView.style.display = 'block';
+
+            const titleEl = document.getElementById('insuranceHandbookPlaceholderTitle');
+            const textEl = document.getElementById('insuranceHandbookPlaceholderText');
+            const categoryLabel = getInsuranceHandbookCategoryLabel(insuranceHandbookCategory);
+
+            if (titleEl) titleEl.textContent = categoryLabel;
+            if (textEl) textEl.textContent = `${categoryLabel} handbook statistics section.`;
+        }
+
         function showInsuranceView(viewName) {
             const viewMap = {
                 home: 'insuranceHomeView',
@@ -897,7 +952,7 @@ const mobileBottomNavConfig = {
             }
 
             if (viewName === 'companies') {
-                loadInsurersDropdown();
+                showInsuranceHandbookCategories();
             }
 
             if (viewName === 'ai') {
@@ -1915,6 +1970,8 @@ const mobileBottomNavConfig = {
         window.onInfoTypeChange = onInfoTypeChange;
         window.showSection = showSection;
         window.showPlaceholder = showPlaceholder;
+        window.showInsuranceHandbookCategories = showInsuranceHandbookCategories;
+        window.showInsuranceHandbookCategory = showInsuranceHandbookCategory;
         window.fetchInsurerDetails = fetchInsurerDetails;
         window.renderBasicInfo = renderBasicInfo;
         window.renderInsurerDetails = renderInsurerDetails;
@@ -1966,7 +2023,18 @@ const mobileBottomNavConfig = {
             window.firebaseLogout();
         }
 
+        function canAccessModule(moduleName) {
+            const allowedModules = moduleAccessState.allowedModules;
+            if (!allowedModules) return true;
+            return allowedModules.has(moduleName);
+        }
+
         function selectModule(moduleName) {
+            if (!canAccessModule(moduleName)) {
+                alert('You do not have access to this module.');
+                return;
+            }
+
             currentModule = moduleName;
             persistUIState({ module: moduleName });
             showApp();
@@ -2206,6 +2274,9 @@ const mobileBottomNavConfig = {
             document.getElementById('dashboardUserEmail').textContent = currentUsername || 'user@example.com';
             document.getElementById('navbar').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'none';
+            if (typeof applyModuleCardVisibility === 'function') {
+                applyModuleCardVisibility(moduleAccessState.allowedModules);
+            }
             currentModule = null;
             persistUIState({ module: null, tab: 'dashboard' });
             updateMobileTopHeader();
@@ -2300,6 +2371,76 @@ window.ref = ref;
 window.uploadBytes = uploadBytes;
 window.getDownloadURL = getDownloadURL;
 
+const restrictedInsuranceEmail = 'meghana.nara@gmail.com';
+const moduleCardConfig = [
+    { id: 'tennisModule', module: 'Tennis' },
+    { id: 'actuaryModule', module: 'Actuaries' },
+    { id: 'mobilityModule', module: 'Mobility - Physio' },
+    { id: 'insuranceModule', module: 'Insurance' },
+    { id: 'aiModule', module: 'AI_ML_DS' }
+];
+
+function normalizeModuleName(moduleName) {
+    return String(moduleName || '').trim().toLowerCase();
+}
+
+function resolveModuleAccess(user, userData = {}) {
+    const resolvedEmail = String(userData?.email || user?.email || '').trim().toLowerCase();
+    const modules = Array.isArray(userData?.modules) ? userData.modules : [];
+    const normalizedModules = modules.map(normalizeModuleName).filter(Boolean);
+
+    const restrictedByEmail = resolvedEmail === restrictedInsuranceEmail;
+    const restrictedByModules = normalizedModules.length > 0 && normalizedModules.every(moduleName => moduleName === 'insurance');
+    const insuranceOnlyUser = restrictedByEmail || restrictedByModules;
+
+    return {
+        insuranceOnlyUser,
+        allowedModules: insuranceOnlyUser ? new Set(['Insurance']) : null
+    };
+}
+
+function applyModuleCardVisibility(allowedModules) {
+    moduleCardConfig.forEach(({ id, module }) => {
+        const card = document.getElementById(id);
+        if (!card) return;
+        const shouldShow = !allowedModules || allowedModules.has(module);
+        card.style.display = shouldShow ? '' : 'none';
+        card.style.pointerEvents = shouldShow ? '' : 'none';
+        card.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+    });
+}
+
+window.applyModuleVisibilityAfterLogin = async function(user = auth.currentUser) {
+    if (!user) {
+        moduleAccessState = { insuranceOnlyUser: false, allowedModules: null };
+        applyModuleCardVisibility(null);
+        return moduleAccessState;
+    }
+
+    const preResolvedAccess = resolveModuleAccess(user, { email: user.email });
+    moduleAccessState = preResolvedAccess;
+    applyModuleCardVisibility(moduleAccessState.allowedModules);
+
+    try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? userSnap.data() : {};
+
+        moduleAccessState = resolveModuleAccess(user, userData);
+        applyModuleCardVisibility(moduleAccessState.allowedModules);
+
+        if (currentModule && !canAccessModule(currentModule)) {
+            showDashboard();
+        }
+
+        return moduleAccessState;
+    } catch (error) {
+        console.error('Error applying module visibility access:', error);
+        applyModuleCardVisibility(moduleAccessState.allowedModules);
+        return moduleAccessState;
+    }
+};
+
 // Authentication Functions
 window.checkAuthState = function() {
     onAuthStateChanged(auth, async (user) => {
@@ -2312,11 +2453,14 @@ window.checkAuthState = function() {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardUserEmail').textContent = currentUsername;
 
+            const accessState = await window.applyModuleVisibilityAfterLogin(user);
+
             const savedState = window.getPersistedUIState ? window.getPersistedUIState() : {};
             const savedModule = savedState?.module || null;
             const savedTab = savedState?.tab || '';
+            const canRestoreSavedModule = savedModule && (!accessState.allowedModules || accessState.allowedModules.has(savedModule));
 
-            if (savedModule) {
+            if (canRestoreSavedModule) {
                 selectModule(savedModule);
 
                 const fallbackTab = savedModule === 'Mobility - Physio'
@@ -2345,6 +2489,8 @@ window.checkAuthState = function() {
             currentUserId = null;
             currentUsername = null;
             currentModule = null;
+            moduleAccessState = { insuranceOnlyUser: false, allowedModules: null };
+            applyModuleCardVisibility(null);
             document.getElementById('currentUserDisplay').textContent = '';
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('dashboard').style.display = 'none';
