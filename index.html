@@ -2495,14 +2495,20 @@ input:focus,textarea:focus,select:focus{
 
                         <div class="insurance-analytics-main">
                             <div class="insurance-data-card insurance-analytics-panel">
-                                <h3 class="insurance-analytics-panel-title">Data Panel</h3>
+                                <div class="insurance-analytics-panel-head">
+                                    <span class="insurance-analytics-panel-icon" aria-hidden="true">📋</span>
+                                    <h3 class="insurance-analytics-panel-title">Data Panel</h3>
+                                </div>
                                 <div id="insuranceLeftPanelContent">
                                     <p class="insurance-data-muted">Select an insurer to view analytics.</p>
                                 </div>
                             </div>
 
                             <div class="insurance-data-card insurance-analytics-panel">
-                                <h3 class="insurance-analytics-panel-title">Visualization Panel</h3>
+                                <div class="insurance-analytics-panel-head">
+                                    <span class="insurance-analytics-panel-icon" aria-hidden="true">📈</span>
+                                    <h3 class="insurance-analytics-panel-title">Visualization Panel</h3>
+                                </div>
                                 <div id="insurancePremiumChartWrap" class="insurance-premium-chart-wrap">
                                     <p id="insurancePremiumChartMessage" class="insurance-data-muted">Select an insurer to view analytics.</p>
                                     <canvas id="insurancePremiumChartCanvas" class="insurance-premium-chart-canvas"></canvas>

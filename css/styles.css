@@ -2119,6 +2119,10 @@ input:focus,textarea:focus,select:focus{
 
 .insurance-analytics-control-card{
     cursor:default;
+    min-height:112px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
 }
 
 .insurance-analytics-control-card label{
@@ -2131,6 +2135,7 @@ input:focus,textarea:focus,select:focus{
 .insurance-analytics-control-card select{
     width:100%;
     margin:0;
+    min-height:48px;
 }
 
 .insurance-analytics-main{
@@ -2143,15 +2148,68 @@ input:focus,textarea:focus,select:focus{
 .insurance-analytics-panel{
     cursor:default;
     min-height:420px;
+    height:420px;
     display:flex;
     flex-direction:column;
 }
 
+.insurance-analytics-panel-head{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin-bottom:0.8rem;
+    padding-bottom:0.55rem;
+    border-bottom:1px solid #edf2f7;
+}
+
+.insurance-analytics-panel-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    border-radius:8px;
+    background:#eef4ff;
+    font-size:0.95rem;
+}
+
 .insurance-analytics-panel-title{
-    margin:0 0 0.75rem 0;
+    margin:0;
     color:#0f2540;
     font-size:1.1rem;
     font-weight:700;
+}
+
+#insuranceLeftPanelContent{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    padding-right:0.2rem;
+}
+
+#insuranceLeftPanelContent{
+    scrollbar-width:thin;
+    scrollbar-color:#c9d5e6 transparent;
+}
+
+#insuranceLeftPanelContent::-webkit-scrollbar{
+    width:8px;
+}
+
+#insuranceLeftPanelContent::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+#insuranceLeftPanelContent::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg,#d7e2f0,#bccbdd);
+    border-radius:999px;
+    border:2px solid transparent;
+    background-clip:padding-box;
+}
+
+#insuranceLeftPanelContent::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(180deg,#c4d3e6,#a8bdd4);
+    background-clip:padding-box;
 }
 
 .insurance-premium-title{
@@ -2208,6 +2266,8 @@ input:focus,textarea:focus,select:focus{
     min-height:340px;
     position:relative;
     flex:1;
+    min-height:0;
+    margin-top:0.15rem;
 }
 
 .insurance-premium-chart-canvas{
@@ -2226,6 +2286,7 @@ input:focus,textarea:focus,select:focus{
     }
     .insurance-analytics-panel{
         min-height:unset;
+        height:auto;
     }
     .insurance-card{
         min-height:180px;
