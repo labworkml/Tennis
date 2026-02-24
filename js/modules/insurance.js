@@ -25,6 +25,14 @@ function safeLower(value) {
     return String(value || '').trim().toLowerCase();
 }
 
+function normalizeToken(value) {
+    return safeLower(value).replace(/[^a-z0-9]/g, '');
+}
+
+function formatIndianNumber(value) {
+    return Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+
 async function getInsuranceStateData() {
     if (Array.isArray(insuranceStateDataCache)) return insuranceStateDataCache;
 
@@ -44,55 +52,105 @@ async function getInsuranceStateData() {
 
 function buildStateFiguresReply(userQuery, records) {
     const queryText = safeLower(userQuery);
+    const queryToken = normalizeToken(userQuery);
     const yearMatch = queryText.match(/\b(19|20)\d{2}\b/);
     const queryYear = yearMatch ? yearMatch[0] : '';
 
-    const requestedState = records.find(item => queryText.includes(safeLower(item.state_name || item.state || '')))?.state_name || '';
-    const stateText = safeLower(requestedState) || (queryText.includes('karnataka') ? 'karnataka' : '');
-
-    const keywordList = ['aviation', 'motor', 'health', 'fire', 'marine', 'crop', 'liability'];
+    const keywordList = ['aviation', 'motor', 'health', 'fire', 'marine', 'crop', 'liability', 'travel', 'engineering'];
     const keyword = keywordList.find(word => queryText.includes(word)) || '';
 
-    let filtered = records.filter(item => {
-        const stateName = safeLower(item.state_name || item.state || '');
-        if (!stateText) return true;
-        return stateName.includes(stateText);
+    const uniqueStates = Array.from(new Set(
+        records
+            .map(item => String(item.state_name || item.state || '').trim())
+            .filter(Boolean)
+    ));
+
+    const matchedStates = uniqueStates.filter(stateName => {
+        const stateLower = safeLower(stateName);
+        const stateToken = normalizeToken(stateName);
+        return queryText.includes(stateLower) || (stateToken && queryToken.includes(stateToken));
     });
 
-    if (queryYear) {
-        filtered = filtered.filter(item => String(item.year || '').trim() === queryYear);
-    }
+    const compareIntent = /\b(compare|vs|versus)\b/.test(queryText);
 
-    if (keyword) {
-        filtered = filtered.filter(item => {
+    const filterRows = (stateName = '') => records.filter(item => {
+        const rowState = String(item.state_name || item.state || '').trim();
+        const rowStateLower = safeLower(rowState);
+        if (stateName && rowStateLower !== safeLower(stateName)) return false;
+
+        if (queryYear && String(item.year || '').trim() !== queryYear) return false;
+
+        if (keyword) {
             const lob = safeLower(item.lob || '');
             const segment = safeLower(item.segment || '');
-            return lob.includes(keyword) || segment.includes(keyword);
-        });
-    }
+            if (!lob.includes(keyword) && !segment.includes(keyword)) return false;
+        }
 
-    if (!filtered.length) {
-        return 'No matching records found in state_lob_data for that query. Try including state and year, for example: Karnataka 2025 aviation.';
-    }
-
-    const total = filtered.reduce((sum, item) => sum + parseNumericValue(item.value), 0);
-    const byLob = new Map();
-    filtered.forEach(item => {
-        const lob = String(item.lob || item.segment || 'Unknown').trim() || 'Unknown';
-        byLob.set(lob, (byLob.get(lob) || 0) + parseNumericValue(item.value));
+        return true;
     });
 
-    const topLobs = Array.from(byLob.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([lob, value]) => `${lob}: ${value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`)
-        .join(' | ');
+    const summarize = rows => {
+        const total = rows.reduce((sum, item) => sum + parseNumericValue(item.value), 0);
+        const byLob = new Map();
+        rows.forEach(item => {
+            const lob = String(item.lob || item.segment || 'Unknown').trim() || 'Unknown';
+            byLob.set(lob, (byLob.get(lob) || 0) + parseNumericValue(item.value));
+        });
 
-    const headerState = requestedState || (stateText ? stateText.charAt(0).toUpperCase() + stateText.slice(1) : 'All states');
-    const headerYear = queryYear || 'all years';
-    const headerKeyword = keyword ? `, filter: ${keyword}` : '';
+        const topLobs = Array.from(byLob.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 4)
+            .map(([lob, value]) => `${lob}: ${formatIndianNumber(value)}`);
 
-    return `${headerState} (${headerYear}${headerKeyword}) — Records: ${filtered.length}, Total value: ${total.toLocaleString('en-IN', { maximumFractionDigits: 2 })}. Top lines: ${topLobs}.`;
+        return {
+            count: rows.length,
+            total,
+            topLobs
+        };
+    };
+
+    if (compareIntent && matchedStates.length >= 2) {
+        const leftState = matchedStates[0];
+        const rightState = matchedStates[1];
+
+        const leftRows = filterRows(leftState);
+        const rightRows = filterRows(rightState);
+
+        if (!leftRows.length && !rightRows.length) {
+            return 'No matching records found for comparison. Try: Compare Karnataka and Andhra Pradesh in marine 2024.';
+        }
+
+        const left = summarize(leftRows);
+        const right = summarize(rightRows);
+        const diff = left.total - right.total;
+        const winner = diff === 0 ? 'Both are equal' : diff > 0 ? leftState : rightState;
+        const scope = `${queryYear || 'all years'}${keyword ? `, ${keyword}` : ''}`;
+
+        return [
+            `Comparison (${scope}): ${leftState} vs ${rightState}`,
+            `${leftState} — Total: ${formatIndianNumber(left.total)} | Records: ${left.count} | Top: ${left.topLobs.join(' | ') || 'n/a'}`,
+            `${rightState} — Total: ${formatIndianNumber(right.total)} | Records: ${right.count} | Top: ${right.topLobs.join(' | ') || 'n/a'}`,
+            `${winner}${diff !== 0 ? ` leads by ${formatIndianNumber(Math.abs(diff))}` : ''}.`
+        ].join('\n');
+    }
+
+    const selectedState = matchedStates[0] || '';
+    const filtered = filterRows(selectedState);
+
+    if (!filtered.length) {
+        return 'No matching records found in state_lob_data. Try a query like: Karnataka aviation 2025, or Compare Karnataka and Andhra Pradesh marine 2024.';
+    }
+
+    const summary = summarize(filtered);
+    const scopeState = selectedState || 'All states';
+    const scopeYear = queryYear || 'all years';
+    const scopeKeyword = keyword ? `, ${keyword}` : '';
+
+    return [
+        `${scopeState} (${scopeYear}${scopeKeyword})`,
+        `Total value: ${formatIndianNumber(summary.total)} | Records: ${summary.count}`,
+        `Top lines: ${summary.topLobs.join(' | ') || 'n/a'}`
+    ].join('\n');
 }
 
 async function fetchInsuranceDatabaseReply(userQuery) {
