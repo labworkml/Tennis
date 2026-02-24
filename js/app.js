@@ -3412,17 +3412,21 @@ window.applyModuleVisibilityAfterLogin = async function(user = auth.currentUser)
     applyModuleCardVisibility(moduleAccessState.allowedModules);
 
     try {
-    const userRef = db.collection('users').doc(user.uid);
+const userRef = db.collection('users').doc(user.uid);
+
+// ⭐ LOCAL USER DATA
+const userData = {
+  userId: user.uid,
+  email: user.email || null
+};
 
 // CREATE USER DOC IF NOT EXISTS
 await userRef.set({
-  userId: user.uid,
-  email: user.email || null,
+  ...userData,
   createdAt: new Date()
 }, { merge: true });
 
-const userSnap = await userRef.get();
-        const userData = userSnap.exists() ? userSnap.data() : {};
+
 
         moduleAccessState = resolveModuleAccess(user, userData);
         applyModuleCardVisibility(moduleAccessState.allowedModules);
