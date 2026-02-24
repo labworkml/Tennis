@@ -1,7 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="https://unpkg.com/@google/generative-ai/dist/browser.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Tennis Training</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2027,7 +2029,7 @@ input:focus,textarea:focus,select:focus{
     overflow:hidden;
 }
 
-#insuranceChatMessages{
+.insurance-chat-area{
     min-height:330px;
     max-height:430px;
     overflow-y:auto;
@@ -2035,6 +2037,21 @@ input:focus,textarea:focus,select:focus{
     display:flex;
     flex-direction:column;
     gap:0.7rem;
+}
+
+.user-message {
+    background: #e3f2fd;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin: 8px 0;
+    align-self: flex-end;
+}
+
+.ai-message {
+    background: #f1f3f5;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin: 8px 0;
 }
 
 .insurance-chat-row{
@@ -2145,6 +2162,48 @@ input:focus,textarea:focus,select:focus{
     color:#0f2540;
     font-size:1.1rem;
     font-weight:700;
+}
+
+.insurance-analytics-panel-head{
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
+    flex-wrap:wrap;
+    overflow:visible;
+}
+
+.insurance-timeline-control{
+    margin-left:auto;
+    display:none;
+    align-items:center;
+    gap:0.5rem;
+    flex-wrap:nowrap;
+    max-width:100%;
+    min-width:0;
+    overflow:visible;
+    flex:0 0 auto;
+}
+
+.insurance-timeline-control.show{
+    display:flex;
+}
+
+.insurance-timeline-control label{
+    margin:0;
+    white-space:nowrap;
+}
+
+.insurance-timeline-control select{
+    width:auto;
+    min-width:170px;
+    max-width:220px;
+    height:40px;
+    min-height:40px;
+    padding:0 1.9rem 0 0.75rem;
+    line-height:normal;
+    box-sizing:border-box;
+    flex:0 0 auto;
+    vertical-align:middle;
 }
 
 .insurance-hidden{
@@ -2296,6 +2355,14 @@ input:focus,textarea:focus,select:focus{
     .insurance-data-table th,
     .insurance-data-table td{
         padding:0.55rem 0.45rem;
+    }
+    .insurance-timeline-control{
+        margin-left:0;
+        width:100%;
+    }
+    .insurance-timeline-control select{
+        width:100%;
+        max-width:none;
     }
 }
 
@@ -2509,14 +2576,31 @@ input:focus,textarea:focus,select:focus{
                             </div>
 
                             <div class="insurance-analytics-controls">
-                                <div class="insurance-data-card insurance-analytics-control-card">
+                                <div id="insuranceDomainControlCard" class="insurance-data-card insurance-analytics-control-card">
+                                    <label for="insuranceDomainSelect">Select Domain</label>
+                                    <select id="insuranceDomainSelect" onchange="onInsuranceDomainChange(this.value)">
+                                        <option value="">Choose domain</option>
+                                        <option value="insurer">Insurer</option>
+                                        <option value="state">State</option>
+                                        <option value="line_of_business">Line of Business</option>
+                                    </select>
+                                </div>
+
+                                <div id="insuranceInsurerControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
                                     <label for="insuranceInsurerSelect">Select Insurer</label>
                                     <select id="insuranceInsurerSelect" onchange="onInsurerChange(this.value)">
                                         <option value="">Loading insurers...</option>
                                     </select>
                                 </div>
 
-                                <div class="insurance-data-card insurance-analytics-control-card">
+                                <div id="insuranceStateControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
+                                    <label for="insuranceStateSelect">Select State</label>
+                                    <select id="insuranceStateSelect" onchange="onInsuranceStateChange(this.value)" disabled>
+                                        <option value="">Choose state</option>
+                                    </select>
+                                </div>
+
+                                <div id="insuranceInfoControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
                                     <label for="insuranceInfoTypeSelect">Select Information</label>
                                     <select id="insuranceInfoTypeSelect" onchange="onInfoTypeChange()" disabled>
                                         <option value="">Choose information type</option>
@@ -2526,7 +2610,14 @@ input:focus,textarea:focus,select:focus{
                                     </select>
                                 </div>
 
-                                <div id="insuranceSegmentControlCard" class="insurance-data-card insurance-analytics-control-card insurance-segment-control" aria-hidden="true">
+                                <div id="insuranceLobControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
+                                    <label for="insuranceLobSelect">Select LOB</label>
+                                    <select id="insuranceLobSelect" onchange="onInsuranceLobChange(this.value)" disabled>
+                                        <option value="">Choose lob</option>
+                                    </select>
+                                </div>
+
+                                <div id="insuranceSegmentControlCard" class="insurance-data-card insurance-analytics-control-card insurance-segment-control insurance-hidden" aria-hidden="true">
                                     <label for="insuranceSegmentSelect">Select Segment</label>
                                     <select id="insuranceSegmentSelect" onchange="onSegmentChange(this.value)" disabled>
                                         <option value="">Choose segment</option>
@@ -2539,7 +2630,7 @@ input:focus,textarea:focus,select:focus{
                                 </div>
                             </div>
 
-                            <div class="insurance-analytics-main">
+                            <div id="insuranceAnalyticsPanels" class="insurance-analytics-main insurance-hidden">
                                 <div class="insurance-data-card insurance-analytics-panel">
                                     <div class="insurance-analytics-panel-head">
                                         <span class="insurance-analytics-panel-icon" aria-hidden="true">📋</span>
@@ -2603,10 +2694,14 @@ input:focus,textarea:focus,select:focus{
                         </div>
                         <h1>Insurance Intelligence</h1>
                         <div class="insurance-chat-wrap">
-                            <div id="insuranceChatMessages"></div>
+                            <div id="chatMessages" class="insurance-chat-area">
+                                <div class="ai-message">
+                                    Insurance Assistant ready. Ask about provisions, solvency, or company indicators.
+                                </div>
+                            </div>
                             <div class="insurance-chat-input-row">
-                                <input type="text" id="insuranceChatInput" placeholder="Ask about provisions, companies, or concepts..." onkeydown="if(event.key==='Enter'){sendInsuranceChatMessage();}">
-                                <button class="submit-btn btn-sm" onclick="sendInsuranceChatMessage()">Send</button>
+                                <input type="text" id="chatInput" placeholder="Ask about provisions, companies, or concepts...">
+                                <button id="sendBtn" class="submit-btn btn-sm">Send</button>
                             </div>
                         </div>
                     </div>
@@ -4083,7 +4178,7 @@ input:focus,textarea:focus,select:focus{
 
             if (viewName === 'ai') {
                 setTimeout(() => {
-                    const input = document.getElementById('insuranceChatInput');
+                    const input = document.getElementById('chatInput');
                     if (input) input.focus();
                 }, 50);
             }
@@ -4983,6 +5078,181 @@ window.orderBy = orderBy;
 window.ref = ref;
 window.uploadBytes = uploadBytes;
 window.getDownloadURL = getDownloadURL;
+
+const GEMINI_API_KEY = "AIzaSyBxzP1qE8xBAyf5945UaLImJdZM2jYdR8E";
+
+async function askInsuranceAI(userQuery) {
+
+    try {
+
+        const genAI = new google.generativeai.GoogleGenerativeAI(GEMINI_API_KEY);
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash"
+        });
+
+        // ===============================
+        // FETCH STATE LOB DATA
+        // ===============================
+        const stateSnapshot = await getDocs(collection(db, "state_lob_data"));
+
+        let stateData = [];
+
+        stateSnapshot.forEach(doc => {
+            stateData.push(doc.data());
+        });
+
+
+        // ===============================
+        // FETCH INSURER LIFE DATA
+        // ===============================
+        const lifeSnapshot = await getDocs(collection(db, "insurers_master"));
+
+        let lifeData = [];
+
+        lifeSnapshot.forEach(doc => {
+            lifeData.push(doc.data());
+        });
+
+
+        // ===============================
+        // FETCH INSURER NON-LIFE DATA
+        // ===============================
+        const nonLifeSnapshot = await getDocs(collection(db, "insurers_master_nonlife"));
+
+        let nonLifeData = [];
+
+        nonLifeSnapshot.forEach(doc => {
+            nonLifeData.push(doc.data());
+        });
+
+
+        // ===============================
+        // PROMPT
+        // ===============================
+        const prompt = `
+I am working in an insurance regulatory body and querying internal statistics.
+
+Database contains 3 datasets:
+
+1. STATE LOB DATA (General Insurance State Level)
+Fields:
+state_name, state_code, lob, segment, year, value
+
+2. LIFE INSURERS DATA
+Fields:
+insurer_name, reg_no, sector, category, total_premium (year-wise)
+
+3. NON LIFE INSURERS DATA
+Fields:
+insurer_name, reg_no, sector, category, gross_direct_premium (year-wise)
+
+User Question:
+${userQuery}
+
+State Data:
+${JSON.stringify(stateData).slice(0, 12000)}
+
+Life Insurer Data:
+${JSON.stringify(lifeData).slice(0, 8000)}
+
+Non Life Insurer Data:
+${JSON.stringify(nonLifeData).slice(0, 8000)}
+
+Instructions:
+
+1. Understand the user's question
+2. Identify which dataset to use
+3. Extract relevant numbers
+4. Answer clearly
+6. If multiple years exist, show trend
+7. If data not found, say politely
+
+I am not able to find response for your inputs.
+`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        addAIMessage(text);
+
+    } catch (error) {
+        console.error(error);
+        addAIMessage("Error fetching insurance intelligence.");
+    }
+}
+
+// ===============================
+// SEND MESSAGE
+// ===============================
+
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+
+async function sendMessage() {
+
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    addUserMessage(message);
+
+    input.value = "";
+
+    await askInsuranceAI(message);
+}
+
+
+// ===============================
+// DISPLAY USER MESSAGE
+// ===============================
+
+function addUserMessage(text) {
+
+    const chatBox = document.getElementById("chatMessages");
+
+    const msg = document.createElement("div");
+    msg.className = "user-message";
+    msg.innerText = text;
+
+    chatBox.appendChild(msg);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+// ===============================
+// DISPLAY AI MESSAGE
+// ===============================
+
+function addAIMessage(text) {
+
+    const chatBox = document.getElementById("chatMessages");
+
+    const msg = document.createElement("div");
+    msg.className = "ai-message";
+    msg.innerText = text;
+
+    chatBox.appendChild(msg);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+// ===============================
+// ENTER KEY SUPPORT
+// ===============================
+
+document
+    .getElementById("chatInput")
+    .addEventListener("keypress", function (e) {
+
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+
+    });
 
 // Authentication Functions
 window.checkAuthState = function() {

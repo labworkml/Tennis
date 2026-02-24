@@ -784,6 +784,10 @@ const mobileBottomNavConfig = {
         let selectedInsurer = '';
         let selectedInfoType = '';
         let selectedSegment = '';
+        let insuranceAnalyticsDomain = '';
+        let selectedStateCode = '';
+        let selectedStateName = '';
+        let selectedStateLob = '';
         let selectedTimeline = 'all_years';
         let currentMetricRows = [];
         let currentMetricLabel = '';
@@ -908,11 +912,420 @@ const mobileBottomNavConfig = {
             return 'insurers_master';
         }
 
+        function setInsuranceControlHidden(elementId, isHidden) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.classList.toggle('insurance-hidden', !!isHidden);
+            el.style.display = isHidden ? 'none' : '';
+        }
+
+        function setInsuranceSelectOptions(selectEl, options, placeholderText) {
+            if (!selectEl) return;
+            const placeholder = placeholderText || 'Choose option';
+            selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+            (options || []).forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.textContent = item.label;
+                selectEl.appendChild(option);
+            });
+        }
+
+        function setInsuranceInitialGeneralUi() {
+            insuranceAnalyticsDomain = '';
+            selectedStateCode = '';
+            selectedStateName = '';
+            selectedStateLob = '';
+
+            const domainEl = document.getElementById('insuranceDomainSelect');
+            const insurerEl = document.getElementById('insuranceInsurerSelect');
+            const stateEl = document.getElementById('insuranceStateSelect');
+            const infoEl = document.getElementById('insuranceInfoTypeSelect');
+            const lobEl = document.getElementById('insuranceLobSelect');
+            const segmentEl = document.getElementById('insuranceSegmentSelect');
+
+            if (domainEl) domainEl.value = '';
+            if (insurerEl) insurerEl.value = '';
+            if (stateEl) {
+                stateEl.value = '';
+                stateEl.disabled = true;
+            }
+            if (infoEl) {
+                infoEl.value = '';
+                infoEl.disabled = true;
+            }
+            if (lobEl) {
+                lobEl.value = '';
+                lobEl.disabled = true;
+            }
+            if (segmentEl) {
+                segmentEl.value = '';
+                segmentEl.disabled = true;
+            }
+
+            setInsuranceControlHidden('insuranceDomainControlCard', false);
+            setInsuranceControlHidden('insuranceInsurerControlCard', true);
+            setInsuranceControlHidden('insuranceStateControlCard', true);
+            setInsuranceControlHidden('insuranceInfoControlCard', true);
+            setInsuranceControlHidden('insuranceLobControlCard', true);
+            setInsuranceControlHidden('insuranceSegmentControlCard', true);
+            setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+
+            hideTimelineControl();
+            showPlaceholder('Select domain to view analytics');
+            renderLeftPanelHtml('<p class="insurance-data-muted">Select domain to view analytics.</p>');
+        }
+
+        function setInsuranceInsurerUi() {
+            setInsuranceControlHidden('insuranceDomainControlCard', false);
+            setInsuranceControlHidden('insuranceInsurerControlCard', false);
+            setInsuranceControlHidden('insuranceStateControlCard', true);
+            setInsuranceControlHidden('insuranceInfoControlCard', false);
+            setInsuranceControlHidden('insuranceLobControlCard', true);
+            setInsuranceControlHidden('insuranceSegmentControlCard', true);
+            setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+
+            selectedStateCode = '';
+            selectedStateName = '';
+            selectedStateLob = '';
+
+            refreshInsuranceInfoTypeOptions();
+            loadInsurersDropdown();
+        }
+
+        async function loadStateMasterOptions() {
+            const stateEl = document.getElementById('insuranceStateSelect');
+            if (!stateEl || !window.db || !window.collection || !window.getDocs) return;
+
+            stateEl.disabled = true;
+            setInsuranceSelectOptions(stateEl, [], 'Loading states...');
+
+            try {
+                const snapshot = await window.getDocs(
+                    window.query(
+                        window.collection(window.db, 'state_master'),
+                        window.orderBy('state_name', 'asc')
+                    )
+                );
+
+                const states = [];
+                snapshot.forEach(docSnap => {
+                    const row = docSnap.data() || {};
+                    const stateCode = String(row.state_code || '').trim();
+                    const stateName = String(row.state_name || '').trim();
+                    if (!stateCode || !stateName) return;
+                    states.push({ value: stateCode, label: stateName });
+                });
+
+                setInsuranceSelectOptions(stateEl, states, 'Choose state');
+                stateEl.disabled = false;
+            } catch (error) {
+                console.error('Error loading state master:', error);
+                setInsuranceSelectOptions(stateEl, [], 'Unable to load states');
+            }
+        }
+
+        async function loadStateLobOptions() {
+            const lobEl = document.getElementById('insuranceLobSelect');
+            if (!lobEl || !selectedStateCode || !window.db || !window.collection || !window.getDocs) return;
+
+            lobEl.disabled = true;
+            setInsuranceSelectOptions(lobEl, [], 'Loading LOB...');
+
+            try {
+                const snapshot = await window.getDocs(
+                    window.query(
+                        window.collection(window.db, 'state_lob_data'),
+                        window.where('state_code', '==', selectedStateCode)
+                    )
+                );
+
+                const lobSet = new Set();
+                snapshot.forEach(docSnap => {
+                    const row = docSnap.data() || {};
+                    const lob = String(row.lob || '').trim();
+                    if (lob) lobSet.add(lob);
+                });
+
+                const options = Array.from(lobSet)
+                    .sort((a, b) => a.localeCompare(b))
+                    .map(lob => ({ value: lob, label: lob }));
+
+                setInsuranceSelectOptions(lobEl, options, 'Choose lob');
+                lobEl.disabled = false;
+            } catch (error) {
+                console.error('Error loading state LOB options:', error);
+                setInsuranceSelectOptions(lobEl, [], 'Unable to load lob');
+            }
+        }
+
+        function formatCrores(value) {
+            const numericValue = Number(value);
+            if (!Number.isFinite(numericValue)) return '0.00';
+            return numericValue.toFixed(2);
+        }
+
+        function renderStateDataTable(rows = []) {
+            if (!rows.length) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">No state data available for selected LOB.</p>');
+                return;
+            }
+
+            renderLeftPanelHtml(`
+                <h3 class="insurance-premium-title">State LOB Values</h3>
+                <table class="insurance-data-table insurance-premium-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Value (in Crores)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                <td>${escapeInsuranceHtml(String(row.year))}</td>
+                                <td>${escapeInsuranceHtml(formatCrores(row.value))}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `);
+        }
+
+        function renderStateValueChart(rows = []) {
+            const canvas = document.getElementById('insurancePremiumChartCanvas');
+            const messageEl = document.getElementById('insurancePremiumChartMessage');
+            if (!canvas) return;
+
+            if (insurerPremiumChart) {
+                insurerPremiumChart.destroy();
+                insurerPremiumChart = null;
+            }
+
+            if (!rows.length) {
+                showPlaceholder('No state trend data available for selected LOB.');
+                return;
+            }
+
+            if (typeof window.Chart !== 'function') {
+                showPlaceholder('Chart library is not available.');
+                return;
+            }
+
+            if (messageEl) messageEl.textContent = '';
+            canvas.style.display = 'block';
+
+            insurerPremiumChart = new window.Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: rows.map(row => String(row.year)),
+                    datasets: [{
+                        label: `${selectedStateName || selectedStateCode} - ${selectedStateLob}`,
+                        data: rows.map(row => Number(row.value) || 0),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCrores(context.parsed.y) + ' Crores';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Value (in Crores)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadStateLobRows() {
+            const snapshot = await window.getDocs(
+                window.query(
+                    window.collection(window.db, 'state_lob_data'),
+                    window.where('state_code', '==', selectedStateCode),
+                    window.where('lob', '==', selectedStateLob),
+                    window.orderBy('year', 'asc')
+                )
+            );
+
+            const rows = [];
+            snapshot.forEach(docSnap => {
+                const row = docSnap.data() || {};
+                rows.push({
+                    year: row.year ?? '',
+                    value: row.value ?? ''
+                });
+            });
+            return rows;
+        }
+
+        async function onInsuranceDomainChange(domainValue) {
+            insuranceAnalyticsDomain = String(domainValue || '').trim();
+
+            if (!insuranceAnalyticsDomain) {
+                setInsuranceInitialGeneralUi();
+                return;
+            }
+
+            if (insuranceAnalyticsDomain === 'insurer') {
+                setInsuranceInsurerUi();
+                return;
+            }
+
+            if (insuranceAnalyticsDomain === 'state') {
+                selectedStateCode = '';
+                selectedStateName = '';
+                selectedStateLob = '';
+
+                setInsuranceControlHidden('insuranceDomainControlCard', false);
+                setInsuranceControlHidden('insuranceInsurerControlCard', true);
+                setInsuranceControlHidden('insuranceStateControlCard', false);
+                setInsuranceControlHidden('insuranceInfoControlCard', true);
+                setInsuranceControlHidden('insuranceLobControlCard', true);
+                setInsuranceControlHidden('insuranceSegmentControlCard', true);
+                setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+
+                hideTimelineControl();
+                showPlaceholder('Select state, information, and LOB to view analytics');
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select state, information, and LOB to view analytics.</p>');
+                await loadStateMasterOptions();
+                return;
+            }
+
+            setInsuranceControlHidden('insuranceInsurerControlCard', true);
+            setInsuranceControlHidden('insuranceStateControlCard', true);
+            setInsuranceControlHidden('insuranceInfoControlCard', true);
+            setInsuranceControlHidden('insuranceLobControlCard', true);
+            setInsuranceControlHidden('insuranceSegmentControlCard', true);
+            setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+            showPlaceholder('Line of Business domain is not configured yet.');
+            renderLeftPanelHtml('<p class="insurance-data-muted">Line of Business domain is not configured yet.</p>');
+        }
+
+        async function onInsuranceStateChange(stateCode) {
+            if (insuranceAnalyticsDomain !== 'state') return;
+
+            selectedStateCode = String(stateCode || '').trim();
+            selectedStateLob = '';
+
+            const stateEl = document.getElementById('insuranceStateSelect');
+            const infoEl = document.getElementById('insuranceInfoTypeSelect');
+            const lobEl = document.getElementById('insuranceLobSelect');
+
+            if (stateEl && stateEl.selectedIndex >= 0) {
+                selectedStateName = stateEl.options[stateEl.selectedIndex]?.text || '';
+            } else {
+                selectedStateName = '';
+            }
+
+            if (lobEl) {
+                lobEl.value = '';
+                lobEl.disabled = true;
+            }
+
+            setInsuranceControlHidden('insuranceLobControlCard', true);
+            setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+
+            if (!selectedStateCode) {
+                setInsuranceControlHidden('insuranceInfoControlCard', true);
+                if (infoEl) {
+                    infoEl.value = '';
+                    infoEl.disabled = true;
+                }
+                return;
+            }
+
+            setInsuranceControlHidden('insuranceInfoControlCard', false);
+            if (infoEl) {
+                setInsuranceSelectOptions(infoEl, [{ value: 'lob', label: 'LOB' }], 'Choose information type');
+                infoEl.disabled = false;
+                infoEl.value = '';
+            }
+        }
+
+        async function onInsuranceLobChange(lobValue) {
+            if (insuranceAnalyticsDomain !== 'state') return;
+            selectedStateLob = String(lobValue || '').trim();
+
+            if (!selectedStateLob) {
+                resetTimelineState();
+                hideTimelineControl();
+                setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+                return;
+            }
+
+            try {
+                const rows = await loadStateLobRows();
+                setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+
+                if (!rows.length) {
+                    resetTimelineState();
+                    hideTimelineControl();
+                    renderStateDataTable(rows);
+                    renderStateValueChart(rows);
+                    return;
+                }
+
+                currentMetricRows = rows;
+                currentMetricType = 'state_lob';
+                currentMetricLabel = 'State LOB Values';
+                selectedTimeline = 'last_5_years';
+
+                showTimelineControl();
+                populateTimelineDropdown(rows.map(row => row.year));
+                const filteredRows = applyTimelineFilter(rows, selectedTimeline);
+                renderStateDataTable(filteredRows);
+                renderStateValueChart(filteredRows);
+            } catch (error) {
+                console.error('Error loading state LOB rows:', error);
+                resetTimelineState();
+                hideTimelineControl();
+                setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+                renderLeftPanelHtml('<p class="insurance-data-muted">Unable to load state analytics data.</p>');
+                showPlaceholder('Unable to load state analytics data.');
+            }
+        }
+
         function showInsuranceHandbookCategories() {
             insuranceHandbookCategory = null;
             selectedInsurer = '';
             selectedInfoType = '';
             selectedSegment = '';
+            insuranceAnalyticsDomain = '';
+            selectedStateCode = '';
+            selectedStateName = '';
+            selectedStateLob = '';
             resetTimelineState();
             hideTimelineControl();
             hideSegmentDropdown();
@@ -942,10 +1355,25 @@ const mobileBottomNavConfig = {
                 selectedInsurer = '';
                 selectedInfoType = '';
                 selectedSegment = '';
+                insuranceAnalyticsDomain = '';
+                selectedStateCode = '';
+                selectedStateName = '';
+                selectedStateLob = '';
                 resetTimelineState();
                 hideTimelineControl();
-                refreshInsuranceInfoTypeOptions();
-                loadInsurersDropdown();
+                if (insuranceHandbookCategory === 'general') {
+                    setInsuranceInitialGeneralUi();
+                } else {
+                    setInsuranceControlHidden('insuranceDomainControlCard', true);
+                    setInsuranceControlHidden('insuranceInsurerControlCard', false);
+                    setInsuranceControlHidden('insuranceStateControlCard', true);
+                    setInsuranceControlHidden('insuranceInfoControlCard', false);
+                    setInsuranceControlHidden('insuranceLobControlCard', true);
+                    setInsuranceControlHidden('insuranceSegmentControlCard', true);
+                    setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+                    refreshInsuranceInfoTypeOptions();
+                    loadInsurersDropdown();
+                }
                 return;
             }
 
@@ -1351,12 +1779,7 @@ const mobileBottomNavConfig = {
         }
 
         function formatPremiumValue(value) {
-            const numeric = Number(value);
-            if (!Number.isFinite(numeric)) return '0.00';
-            return numeric.toLocaleString('en-IN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            return formatCrores(value);
         }
 
         function resetTimelineState() {
@@ -1492,6 +1915,19 @@ const mobileBottomNavConfig = {
 
         function onTimelineChange(selection) {
             selectedTimeline = String(selection || 'all_years');
+
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'state') {
+                if (!currentMetricRows.length) return;
+                const filteredRows = applyTimelineFilter(currentMetricRows, selectedTimeline);
+                renderStateDataTable(filteredRows);
+                renderStateValueChart(filteredRows);
+                return;
+            }
+
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain !== 'insurer') {
+                return;
+            }
+
             if (!currentMetricRows.length) {
                 return;
             }
@@ -1596,6 +2032,7 @@ const mobileBottomNavConfig = {
             const segmentSelectEl = document.getElementById('insuranceSegmentSelect');
             if (!segmentCardEl || !segmentSelectEl) return;
 
+            setInsuranceControlHidden('insuranceSegmentControlCard', false);
             segmentCardEl.classList.add('show');
             segmentCardEl.setAttribute('aria-hidden', 'false');
             segmentSelectEl.disabled = !selectedInsurer;
@@ -1608,6 +2045,7 @@ const mobileBottomNavConfig = {
             if (!segmentCardEl || !segmentSelectEl) return;
 
             segmentCardEl.classList.remove('show');
+            setInsuranceControlHidden('insuranceSegmentControlCard', true);
             segmentCardEl.setAttribute('aria-hidden', 'true');
             segmentSelectEl.value = '';
             segmentSelectEl.disabled = true;
@@ -1699,6 +2137,10 @@ const mobileBottomNavConfig = {
         }
 
         async function onInsurerChange(regNo) {
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain !== 'insurer') {
+                return;
+            }
+
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
             const segmentSelectEl = document.getElementById('insuranceSegmentSelect');
 
@@ -1740,6 +2182,32 @@ const mobileBottomNavConfig = {
         }
 
         function onInfoTypeChange() {
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'state') {
+                const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+                const infoTypeValue = String(infoTypeSelectEl?.value || '').toLowerCase();
+                const lobEl = document.getElementById('insuranceLobSelect');
+
+                selectedStateLob = '';
+                setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+
+                if (infoTypeValue !== 'lob') {
+                    setInsuranceControlHidden('insuranceLobControlCard', true);
+                    if (lobEl) {
+                        lobEl.value = '';
+                        lobEl.disabled = true;
+                    }
+                    return;
+                }
+
+                setInsuranceControlHidden('insuranceLobControlCard', false);
+                if (lobEl) {
+                    lobEl.value = '';
+                    lobEl.disabled = true;
+                }
+                loadStateLobOptions();
+                return;
+            }
+
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
             const infoTypeValue = infoTypeSelectEl?.value || '';
             selectedInfoType = infoTypeValue;
@@ -1844,19 +2312,19 @@ const mobileBottomNavConfig = {
             }
 
             renderLeftPanelHtml(`
-                <h3 class="insurance-premium-title">${escapeInsuranceHtml(premiumLabel)} (₹ Crore)</h3>
+                <h3 class="insurance-premium-title">${escapeInsuranceHtml(premiumLabel)} (in Crores)</h3>
                 <table class="insurance-data-table insurance-premium-table">
                     <thead>
                         <tr>
                             <th>Year</th>
-                            <th>${escapeInsuranceHtml(premiumLabel)}</th>
+                            <th>${escapeInsuranceHtml(premiumLabel)} (in Crores)</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${rows.map(row => `
                             <tr>
                                 <td>${row.year}</td>
-                                <td>₹ ${formatPremiumValue(row.premium)}</td>
+                                <td>${formatPremiumValue(row.premium)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1896,7 +2364,7 @@ const mobileBottomNavConfig = {
                 data: {
                     labels,
                     datasets: [{
-                        label: `${premiumLabel} (₹ Crore)`,
+                        label: `${premiumLabel} (in Crores)`,
                         data: values,
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.12)',
@@ -1921,7 +2389,7 @@ const mobileBottomNavConfig = {
                         },
                         tooltip: {
                             callbacks: {
-                                label: context => `₹ ${formatPremiumValue(context.parsed.y)}`
+                                label: context => `${formatPremiumValue(context.parsed.y)} Crores`
                             }
                         }
                     },
@@ -1938,13 +2406,13 @@ const mobileBottomNavConfig = {
                         y: {
                             title: {
                                 display: true,
-                                text: 'Premium'
+                                text: 'Value (in Crores)'
                             },
                             grid: {
                                 color: 'rgba(148, 163, 184, 0.18)'
                             },
                             ticks: {
-                                callback: value => `₹ ${Number(value).toLocaleString('en-IN')}`
+                                callback: value => formatPremiumValue(value)
                             }
                         }
                     }
@@ -2007,6 +2475,10 @@ const mobileBottomNavConfig = {
         }
 
         function onSegmentChange(segment) {
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain !== 'insurer') {
+                return;
+            }
+
             selectedSegment = String(segment || '').toLowerCase();
 
             if (!selectedSegment) {
@@ -2469,6 +2941,9 @@ const mobileBottomNavConfig = {
         window.saveInsuranceNoteDummy = saveInsuranceNoteDummy;
         window.loadInsurersDropdown = loadInsurersDropdown;
         window.loadInsurerData = loadInsurerData;
+        window.onInsuranceDomainChange = onInsuranceDomainChange;
+        window.onInsuranceStateChange = onInsuranceStateChange;
+        window.onInsuranceLobChange = onInsuranceLobChange;
         window.onInsurerChange = onInsurerChange;
         window.onInfoTypeChange = onInfoTypeChange;
         window.onSegmentChange = onSegmentChange;
