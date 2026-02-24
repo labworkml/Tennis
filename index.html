@@ -5038,7 +5038,7 @@ input:focus,textarea:focus,select:focus{
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-storage.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -5061,6 +5061,11 @@ input:focus,textarea:focus,select:focus{
   const db = getFirestore(app);
   const auth = getAuth(app);
   const storage = getStorage(app);
+
+    // AUTO LOGIN
+    signInAnonymously(auth)
+        .then(() => console.log("Anonymous login success"))
+        .catch(err => console.error("Auth error", err));
 
 window.db = db;
 window.storage = storage;
