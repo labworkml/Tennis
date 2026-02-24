@@ -1,5 +1,4 @@
 ﻿/* Global app + Firebase auth/bootstrap extracted from index.html */
-// ⭐ ADD THIS LINE
 const mobileBottomNavConfig = {
             'Mobility - Physio': [
                 { label: 'Home', tab: 'mobilityHome' },
@@ -84,6 +83,43 @@ const mobileBottomNavConfig = {
             titleEl.innerHTML = `<span aria-hidden="true">${icon}</span><span>${moduleTitle}</span>`;
         }
 
+        const tabInitializers = {
+            calendar: () => initCalendar(),
+            journal: async () => window.firebaseRenderJournalList(),
+            mobilitySessions: async () => {
+                if (window.firebaseRenderMobilitySessions) await window.firebaseRenderMobilitySessions();
+            },
+            mobilityTemplates: async () => {
+                if (window.firebaseRenderMobilityTemplates) await window.firebaseRenderMobilityTemplates();
+            },
+            mobilityCalendar: () => {
+                if (window.initMobilityCalendar) window.initMobilityCalendar();
+            },
+            actuaryNotes: () => {
+                if (window.initializeActuariesUI) window.initializeActuariesUI();
+                if (window.showActuaryModules) window.showActuaryModules();
+            },
+            actuaryLearn: () => {
+                if (window.loadLearnQuestions) window.loadLearnQuestions();
+            },
+            aiSessions: async () => {
+                if (window.loadAIStudySessions) await window.loadAIStudySessions();
+            },
+            aiCoursesBooks: async () => {
+                if (window.loadAICourses) await window.loadAICourses();
+                if (window.loadAIBooks) await window.loadAIBooks();
+            },
+            aiHistory: async () => {
+                if (window.loadAIStudyHistory) await window.loadAIStudyHistory();
+            },
+            aiCalendar: () => {
+                if (window.initAIStudyCalendar) window.initAIStudyCalendar();
+            },
+            aiJournal: async () => {
+                if (window.loadAIStudyJournal) await window.loadAIStudyJournal();
+            }
+        };
+
         function switchTab(tabName, el) {
             const contents = document.querySelectorAll('.tab-content');
             const buttons = document.querySelectorAll('.tab-button');
@@ -94,79 +130,10 @@ const mobileBottomNavConfig = {
             const target = document.getElementById(tabName);
             if (target) target.classList.add('active');
 
-            // Initialize calendar when calendar tab is opened
-            if (tabName === 'calendar') {
+            const initializer = tabInitializers[tabName];
+            if (initializer) {
                 setTimeout(() => {
-                    initCalendar();
-                }, 50);
-            }
-
-            // Render journal list when journal tab is opened
-            if (tabName === 'journal') {
-                setTimeout(async () => {
-                    await window.firebaseRenderJournalList();
-                }, 50);
-            }
-
-            if (tabName === 'mobilitySessions') {
-                setTimeout(async () => {
-                    if (window.firebaseRenderMobilitySessions) await window.firebaseRenderMobilitySessions();
-                }, 50);
-            }
-
-            if (tabName === 'mobilityTemplates') {
-                setTimeout(async () => {
-                    if (window.firebaseRenderMobilityTemplates) await window.firebaseRenderMobilityTemplates();
-                }, 50);
-            }
-
-            if (tabName === 'mobilityCalendar') {
-                setTimeout(() => {
-                    if (window.initMobilityCalendar) window.initMobilityCalendar();
-                }, 50);
-            }
-
-            if (tabName === 'actuaryNotes') {
-                setTimeout(() => {
-                    if (window.initializeActuariesUI) window.initializeActuariesUI();
-                    if (window.showActuaryModules) window.showActuaryModules();
-                }, 50);
-            }
-
-            if (tabName === 'actuaryLearn') {
-                setTimeout(() => {
-                    if (window.loadLearnQuestions) window.loadLearnQuestions();
-                }, 50);
-            }
-
-            if (tabName === 'aiSessions') {
-                setTimeout(async () => {
-                    if (window.loadAIStudySessions) await window.loadAIStudySessions();
-                }, 50);
-            }
-
-            if (tabName === 'aiCoursesBooks') {
-                setTimeout(async () => {
-                    if (window.loadAICourses) await window.loadAICourses();
-                    if (window.loadAIBooks) await window.loadAIBooks();
-                }, 50);
-            }
-
-            if (tabName === 'aiHistory') {
-                setTimeout(async () => {
-                    if (window.loadAIStudyHistory) await window.loadAIStudyHistory();
-                }, 50);
-            }
-
-            if (tabName === 'aiCalendar') {
-                setTimeout(() => {
-                    if (window.initAIStudyCalendar) window.initAIStudyCalendar();
-                }, 50);
-            }
-
-            if (tabName === 'aiJournal') {
-                setTimeout(async () => {
-                    if (window.loadAIStudyJournal) await window.loadAIStudyJournal();
+                    initializer();
                 }, 50);
             }
 
@@ -213,6 +180,12 @@ const mobileBottomNavConfig = {
             const exerciseGroup = document.getElementById('exerciseGroup');
             const durationGroup = document.getElementById('durationGroup');
             const exerciseLabel = document.getElementById('exerciseLabel');
+            const labelMap = {
+                'Conditioning': 'Conditioning Exercise:',
+                'Tennis Drills': 'Drill:',
+                'Rallies': 'Rally Type:',
+                'Match Points': 'Point Drill:'
+            };
             if (!type) {
                 exerciseGroup.style.display = 'none';
                 durationGroup.style.display = 'none';
@@ -220,10 +193,7 @@ const mobileBottomNavConfig = {
             }
             exerciseGroup.style.display = 'block';
             durationGroup.style.display = 'block';
-            if (type === 'Conditioning') exerciseLabel.textContent = 'Conditioning Exercise:';
-            else if (type === 'Tennis Drills') exerciseLabel.textContent = 'Drill:';
-            else if (type === 'Rallies') exerciseLabel.textContent = 'Rally Type:';
-            else if (type === 'Match Points') exerciseLabel.textContent = 'Point Drill:';
+            exerciseLabel.textContent = labelMap[type] || exerciseLabel.textContent;
         }
 
         function addDesignItem() {

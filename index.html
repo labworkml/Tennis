@@ -1867,6 +1867,21 @@ input:focus,textarea:focus,select:focus{
     margin-top:1rem;
 }
 
+#insuranceHomeView .insurance-grid{
+    grid-template-columns:repeat(auto-fill, minmax(280px, 340px));
+    justify-content:flex-start;
+}
+
+#insuranceHomeView .insurance-grid .insurance-card{
+    min-height:170px;
+    max-width:340px;
+    justify-content:center;
+}
+
+#insuranceHomeView .insurance-grid .insurance-card .insurance-card-desc{
+    display:none;
+}
+
 .insurance-card,
 .insurance-data-card{
     border:1px solid #e6edf5;
@@ -2372,7 +2387,7 @@ input:focus,textarea:focus,select:focus{
     <!-- Login Page -->
     <div id="loginPage" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(180deg,#f7fbfd 0%,var(--bg) 100%);padding:1rem;">
         <div style="background:var(--card);padding:2rem;border-radius:12px;box-shadow:0 20px 60px rgba(15,23,42,0.12), 0 0 0 1px rgba(255,255,255,0.4);max-width:400px;width:100%;">
-            <h1 style="text-align:center;color:#0f2540;margin-bottom:2rem;">Personal System</h1>
+            <h1 style="text-align:center;color:#0f2540;margin-bottom:2rem;">Project</h1>
             
             <!-- Sign In Form -->
             <div id="signInForm">
@@ -2483,56 +2498,20 @@ input:focus,textarea:focus,select:focus{
                 <div id="insuranceContainer">
                     <div id="insuranceHomeView" class="insurance-view active">
                         <h1>Insurance Knowledge Hub</h1>
-                        <p class="muted" style="margin-bottom:0.9rem;">Choose a module to explore statutory provisions, regulations, company financials, market inputs, and intelligence support.</p>
+                        <p class="muted" style="margin-bottom:0.9rem;">Choose a module to explore insurance handbook statistics and intelligence support.</p>
                         <div class="insurance-grid">
-                            <div class="insurance-card" onclick="showInsuranceView('provisions')">
-                                <div class="insurance-card-icon">📚</div>
-                                <h3 class="insurance-card-title">Act Provisions</h3>
-                                <p class="insurance-card-desc">Browse key insurance law sections with practical interpretation and related clauses.</p>
-                            </div>
-                            <div class="insurance-card" onclick="showInsuranceView('concepts')">
-                                <div class="insurance-card-icon">🏢</div>
-                                <h3 class="insurance-card-title">Regulations, Circulars and Guidelines</h3>
-                                <p class="insurance-card-desc">Track regulatory updates, circular highlights, and compliance guidance in one place.</p>
-                            </div>
                             <div class="insurance-card" onclick="showInsuranceView('companies')">
                                 <div class="insurance-card-icon">📊</div>
                                 <h3 class="insurance-card-title">Insurance Handbook Statistics</h3>
                                 <p class="insurance-card-desc">Review insurer type, solvency profile, and financial notes for quick analysis.</p>
-                            </div>
-                            <div class="insurance-card" onclick="showInsuranceView('notes')">
-                                <div class="insurance-card-icon">🧠</div>
-                                <h3 class="insurance-card-title">News and Inputs</h3>
-                                <p class="insurance-card-desc">Capture market news, policy inputs, and quick observations in journal format.</p>
                             </div>
                         </div>
                         <div class="insurance-intelligence-layer">
                             <div class="insurance-card insurance-intelligence-card" onclick="showInsuranceView('ai')">
                                 <div class="insurance-card-icon">🧞‍♂️✨</div>
                                 <h3 class="insurance-card-title">Insurance Intelligence</h3>
-                                <p class="insurance-card-desc">Sits across all modules to deliver insight-driven guidance using provisions, regulations, company financials, and news inputs.</p>
+                                <p class="insurance-card-desc">Delivers insight-driven guidance using handbook statistics and your insurance context.</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <div id="insuranceProvisionsView" class="insurance-view">
-                        <div id="insuranceActsScreen" class="insurance-subview active">
-                            <div class="insurance-section-header">
-                                <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
-                                <button class="submit-btn btn-sm" onclick="openInsuranceAddActModal()">+ Add Act</button>
-                            </div>
-                            <h1>Insurance Acts</h1>
-                            <div id="insuranceActsList" class="insurance-grid"></div>
-                        </div>
-
-                        <div id="insuranceActProvisionsScreen" class="insurance-subview">
-                            <div class="insurance-section-header">
-                                <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="openInsuranceActsScreen()">← Back to Acts</button>
-                                <button class="submit-btn btn-sm" onclick="openInsuranceProvisionFormModal()">+ Add Provision</button>
-                            </div>
-                            <h1 id="insuranceActiveActTitle">Act</h1>
-                            <p id="insuranceActiveActDescription" class="muted" style="margin-bottom:0.8rem;"></p>
-                            <div id="insuranceActProvisionsList" class="insurance-grid"></div>
                         </div>
                     </div>
 
@@ -2669,23 +2648,6 @@ input:focus,textarea:focus,select:focus{
                             <h3 id="insuranceHandbookPlaceholderTitle" class="insurance-card-title" style="margin-bottom:0.5rem;">Module</h3>
                             <p id="insuranceHandbookPlaceholderText" class="insurance-data-muted">This section is ready for handbook statistics content.</p>
                         </div>
-                    </div>
-
-                    <div id="insuranceConceptsView" class="insurance-view">
-                        <div class="insurance-section-header">
-                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
-                        </div>
-                        <h1>Regulations, Circulars and Guidelines</h1>
-                        <div id="insuranceConceptsList" class="insurance-grid"></div>
-                    </div>
-
-                    <div id="insuranceNotesView" class="insurance-view">
-                        <div class="insurance-section-header">
-                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
-                            <button class="submit-btn btn-sm" onclick="openInsuranceNoteFormModal()">+ Add Note</button>
-                        </div>
-                        <h1>Market Intelligence</h1>
-                        <div id="insuranceNotesList" class="insurance-grid"></div>
                     </div>
 
                     <div id="insuranceAiView" class="insurance-view">
@@ -4141,13 +4103,8 @@ input:focus,textarea:focus,select:focus{
             if (window.firebaseLoadInsuranceActsAndProvisions) {
                 await window.firebaseLoadInsuranceActsAndProvisions();
             }
-            renderInsuranceActs();
-            openInsuranceActsScreen();
             renderInsuranceCompanies();
-            renderInsuranceConcepts();
-            renderInsuranceNotes();
             renderInsuranceChatMessages();
-            setInsuranceDefaultNoteDate();
             showInsuranceHome();
         }
 
@@ -4158,10 +4115,7 @@ input:focus,textarea:focus,select:focus{
         function showInsuranceView(viewName) {
             const viewMap = {
                 home: 'insuranceHomeView',
-                provisions: 'insuranceProvisionsView',
                 companies: 'insuranceCompaniesView',
-                concepts: 'insuranceConceptsView',
-                notes: 'insuranceNotesView',
                 ai: 'insuranceAiView'
             };
 
@@ -4171,10 +4125,6 @@ input:focus,textarea:focus,select:focus{
 
             const target = document.getElementById(targetId);
             if (target) target.classList.add('active');
-
-            if (viewName === 'provisions') {
-                openInsuranceActsScreen();
-            }
 
             if (viewName === 'ai') {
                 setTimeout(() => {
@@ -4727,7 +4677,7 @@ input:focus,textarea:focus,select:focus{
             const firstProvision = insuranceProvisions[0];
             const aiText = firstProvision
                 ? `Relevant Provision: ${firstProvision.sectionNumber} — ${firstProvision.sectionTitle}. Review tags: ${(firstProvision.tags || []).join(', ') || 'none'}.`
-                : 'No provisions are saved yet. Add Acts and Provisions in the Act Provisions module for context-aware answers.';
+                : 'No provision context is available yet. Insurance Intelligence can still help with handbook statistics and general guidance.';
             insuranceChatMessages.push({ role: 'ai', text: aiText });
 
             input.value = '';
@@ -8280,8 +8230,6 @@ window.initMobilityCalendar = initMobilityCalendar;
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
     apiKey: "AIzaSyCY4Kpra9OhZFgvR6exYt1idyzFvyFdKFg",
     authDomain: "tennis-planner-7dd13.firebaseapp.com",
@@ -8291,14 +8239,12 @@ const firebaseConfig = {
     appId: "1:912382977591:web:62110a00fff74b263101b2",
     measurementId: "G-RFV0PV3T43"
 };
-// ⭐ ADD THESE LINES
 firebase.initializeApp(firebaseConfig);
 
 firebase.auth().signInAnonymously()
   .then(() => console.log("Auth success"))
   .catch(err => console.error(err));
 
-</script>
 </script>
 <script src="js/app.js"></script>
 <script src="js/modules/tennis.js"></script>
