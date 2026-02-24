@@ -3411,14 +3411,14 @@ window.applyModuleVisibilityAfterLogin = async function(user = auth.currentUser)
     applyModuleCardVisibility(moduleAccessState.allowedModules);
 
     try {
-const userRef = firebase.firestore().collection('users').doc(user.uid);
+const userRef = doc(db, 'users', user.uid);
 
 const userData = {
   userId: user.uid,
   email: user.email || null
 };
 
-await userRef.set({
+await setDoc(userRef, {
   ...userData,
   createdAt: new Date()
 }, { merge: true });
