@@ -2519,7 +2519,10 @@ input:focus,textarea:focus,select:focus{
                         <div class="insurance-section-header">
                             <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHome()">← Back to Insurance Home</button>
                         </div>
-                        <h1>Insurance Handbook Statistics</h1>
+                        <div class="insurance-section-header" style="margin-bottom:0.6rem;align-items:center;">
+                            <h1 style="margin:0;">Insurance Handbook Statistics</h1>
+                            <button id="insuranceHandbookRefreshBtn" class="submit-btn btn-muted btn-sm" onclick="resetInsuranceHandbookSelections()" title="Clear selections and start fresh" aria-label="Refresh selections" style="display:none;width:auto;min-width:40px;padding:0.45rem 0.65rem;">⟳</button>
+                        </div>
 
                         <div id="insuranceHandbookCategoryGrid" class="insurance-grid">
                             <div class="insurance-card" onclick="showInsuranceHandbookCategory('life')">
@@ -4861,11 +4864,16 @@ input:focus,textarea:focus,select:focus{
         }
 
         function updateHomeForModule(moduleName) {
+            const homeTab = document.getElementById('home');
             const tennisSection = document.getElementById('tennisHomeSection');
             const moduleSection = document.getElementById('moduleHomeSection');
             const moduleNameEl = document.getElementById('moduleHomeName');
             const insuranceContainer = document.getElementById('insuranceContainer');
             const genericPlaceholder = document.getElementById('genericModulePlaceholder');
+
+            if (homeTab) {
+                homeTab.classList.toggle('insurance-home-layout', moduleName === 'Insurance');
+            }
             
             if (moduleName === 'Tennis') {
                 // Show Tennis content, hide generic module content

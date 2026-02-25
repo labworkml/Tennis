@@ -759,6 +759,7 @@ const mobileBottomNavConfig = {
         let selectedStateCode = '';
         let selectedStateName = '';
         let selectedStateLob = '';
+        let selectedInsurerLob = '';
         let selectedTimeline = 'all_years';
         let currentMetricRows = [];
         let currentMetricLabel = '';
@@ -907,6 +908,7 @@ const mobileBottomNavConfig = {
             selectedStateCode = '';
             selectedStateName = '';
             selectedStateLob = '';
+            selectedInsurerLob = '';
 
             const domainEl = document.getElementById('insuranceDomainSelect');
             const insurerEl = document.getElementById('insuranceInsurerSelect');
@@ -959,6 +961,7 @@ const mobileBottomNavConfig = {
             selectedStateCode = '';
             selectedStateName = '';
             selectedStateLob = '';
+            selectedInsurerLob = '';
 
             refreshInsuranceInfoTypeOptions();
             loadInsurersDropdown();
@@ -1028,6 +1031,23 @@ const mobileBottomNavConfig = {
                 console.error('Error loading state LOB options:', error);
                 setInsuranceSelectOptions(lobEl, [], 'Unable to load lob');
             }
+        }
+
+        function setGeneralInsurerLobOptions() {
+            const lobEl = document.getElementById('insuranceLobSelect');
+            if (!lobEl) return;
+
+            const options = [
+                { value: 'all_segments', label: 'all_segments' },
+                { value: 'fire', label: 'fire' },
+                { value: 'health', label: 'health' },
+                { value: 'marine', label: 'marine' },
+                { value: 'motor', label: 'motor' },
+                { value: 'other_segments', label: 'other_segments' }
+            ];
+
+            setInsuranceSelectOptions(lobEl, options, 'Choose lob');
+            lobEl.disabled = false;
         }
 
         function formatCrores(value) {
@@ -1246,6 +1266,12 @@ const mobileBottomNavConfig = {
         }
 
         async function onInsuranceLobChange(lobValue) {
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'insurer') {
+                selectedInsurerLob = String(lobValue || '').trim();
+                await updateDashboardData();
+                return;
+            }
+
             if (insuranceAnalyticsDomain !== 'state') return;
             selectedStateLob = String(lobValue || '').trim();
 
@@ -1297,6 +1323,7 @@ const mobileBottomNavConfig = {
             selectedStateCode = '';
             selectedStateName = '';
             selectedStateLob = '';
+            selectedInsurerLob = '';
             resetTimelineState();
             hideTimelineControl();
             hideSegmentDropdown();
@@ -1304,10 +1331,74 @@ const mobileBottomNavConfig = {
             const grid = document.getElementById('insuranceHandbookCategoryGrid');
             const lifeView = document.getElementById('insuranceHandbookLifeView');
             const placeholderView = document.getElementById('insuranceHandbookPlaceholderView');
+            const refreshBtn = document.getElementById('insuranceHandbookRefreshBtn');
 
             if (grid) grid.style.display = 'grid';
             if (lifeView) lifeView.style.display = 'none';
             if (placeholderView) placeholderView.style.display = 'none';
+            if (refreshBtn) refreshBtn.style.display = 'none';
+        }
+
+        function resetInsuranceHandbookSelections() {
+            const category = String(insuranceHandbookCategory || '').toLowerCase();
+            if (category !== 'life' && category !== 'general') {
+                return;
+            }
+
+            currentInsurerData = null;
+            selectedInsurer = '';
+            selectedInfoType = '';
+            selectedSegment = '';
+            insuranceAnalyticsDomain = '';
+            selectedStateCode = '';
+            selectedStateName = '';
+            selectedStateLob = '';
+            selectedInsurerLob = '';
+            resetTimelineState();
+            hideTimelineControl();
+            hideSegmentDropdown();
+
+            const insurerEl = document.getElementById('insuranceInsurerSelect');
+            const stateEl = document.getElementById('insuranceStateSelect');
+            const infoEl = document.getElementById('insuranceInfoTypeSelect');
+            const lobEl = document.getElementById('insuranceLobSelect');
+            const segmentEl = document.getElementById('insuranceSegmentSelect');
+
+            if (insurerEl) insurerEl.value = '';
+            if (stateEl) {
+                stateEl.value = '';
+                stateEl.disabled = true;
+            }
+            if (infoEl) {
+                infoEl.value = '';
+                infoEl.disabled = true;
+            }
+            if (lobEl) {
+                lobEl.value = '';
+                lobEl.disabled = true;
+            }
+            if (segmentEl) {
+                segmentEl.value = '';
+                segmentEl.disabled = true;
+            }
+
+            if (category === 'general') {
+                setInsuranceInitialGeneralUi();
+                return;
+            }
+
+            setInsuranceControlHidden('insuranceDomainControlCard', true);
+            setInsuranceControlHidden('insuranceInsurerControlCard', false);
+            setInsuranceControlHidden('insuranceStateControlCard', true);
+            setInsuranceControlHidden('insuranceInfoControlCard', false);
+            setInsuranceControlHidden('insuranceLobControlCard', true);
+            setInsuranceControlHidden('insuranceSegmentControlCard', true);
+            setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+
+            refreshInsuranceInfoTypeOptions();
+            loadInsurersDropdown();
+            renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+            showPlaceholder('Select an insurer to view analytics');
         }
 
         function showInsuranceHandbookCategory(category) {
@@ -1316,12 +1407,14 @@ const mobileBottomNavConfig = {
             const grid = document.getElementById('insuranceHandbookCategoryGrid');
             const lifeView = document.getElementById('insuranceHandbookLifeView');
             const placeholderView = document.getElementById('insuranceHandbookPlaceholderView');
+            const refreshBtn = document.getElementById('insuranceHandbookRefreshBtn');
 
             if (grid) grid.style.display = 'none';
 
             if (insuranceHandbookCategory === 'life' || insuranceHandbookCategory === 'general') {
                 if (lifeView) lifeView.style.display = 'block';
                 if (placeholderView) placeholderView.style.display = 'none';
+                if (refreshBtn) refreshBtn.style.display = 'inline-flex';
                 currentInsurerData = null;
                 selectedInsurer = '';
                 selectedInfoType = '';
@@ -1330,6 +1423,7 @@ const mobileBottomNavConfig = {
                 selectedStateCode = '';
                 selectedStateName = '';
                 selectedStateLob = '';
+                selectedInsurerLob = '';
                 resetTimelineState();
                 hideTimelineControl();
                 if (insuranceHandbookCategory === 'general') {
@@ -1350,6 +1444,7 @@ const mobileBottomNavConfig = {
 
             if (lifeView) lifeView.style.display = 'none';
             if (placeholderView) placeholderView.style.display = 'block';
+            if (refreshBtn) refreshBtn.style.display = 'none';
 
             const titleEl = document.getElementById('insuranceHandbookPlaceholderTitle');
             const textEl = document.getElementById('insuranceHandbookPlaceholderText');
@@ -1983,7 +2078,10 @@ const mobileBottomNavConfig = {
                 return [
                     { value: 'basic', label: 'Basic Info' },
                     { value: 'gross_direct_premium', label: 'Gross Direct Premium' },
-                    { value: 'segment_gdp', label: 'Segment GDP' }
+                    { value: 'segment_gdp', label: 'Segment GDP' },
+                    { value: 'claims_incurred', label: 'Net Claims Incurred' },
+                    { value: 'incurred_claim_ratio', label: 'Incurred Claim Ratio' },
+                    { value: 'net_premium_earned', label: 'Net Premium Earned' }
                 ];
             }
 
@@ -2114,9 +2212,11 @@ const mobileBottomNavConfig = {
 
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
             const segmentSelectEl = document.getElementById('insuranceSegmentSelect');
+            const lobEl = document.getElementById('insuranceLobSelect');
 
             selectedInsurer = String(regNo || '');
             selectedSegment = '';
+            selectedInsurerLob = '';
 
             if (segmentSelectEl) {
                 segmentSelectEl.value = '';
@@ -2127,6 +2227,12 @@ const mobileBottomNavConfig = {
                 infoTypeSelectEl.value = '';
                 infoTypeSelectEl.disabled = !regNo;
             }
+
+            if (lobEl) {
+                lobEl.value = '';
+                lobEl.disabled = true;
+            }
+            setInsuranceControlHidden('insuranceLobControlCard', true);
 
             selectedInfoType = '';
             resetTimelineState();
@@ -2150,6 +2256,133 @@ const mobileBottomNavConfig = {
             }
 
             renderLeftPanelHtml('<p class="insurance-data-muted">Select information type to view data.</p>');
+        }
+
+        function renderGeneralLobMetricTable(rows = [], metricLabel = 'Metric') {
+            if (!rows.length) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">No year-wise data available for the selected information and LOB.</p>');
+                return;
+            }
+
+            renderLeftPanelHtml(`
+                <h3 class="insurance-premium-title">${escapeInsuranceHtml(metricLabel)}</h3>
+                <table class="insurance-data-table insurance-premium-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                <td>${escapeInsuranceHtml(String(row.year))}</td>
+                                <td>${escapeInsuranceHtml(formatCrores(row.value))}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `);
+        }
+
+        async function updateDashboardData() {
+            const isGeneralInsurerFlow = insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'insurer';
+            if (!isGeneralInsurerFlow) {
+                showSection(selectedInfoType);
+                return;
+            }
+
+            const metric = String(selectedInfoType || '').trim();
+            const lob = String(selectedInsurerLob || '').trim();
+            const allowedMetrics = new Set(['claims_incurred', 'incurred_claim_ratio', 'net_premium_earned']);
+            const metricLabels = {
+                claims_incurred: 'Net Claims Incurred',
+                incurred_claim_ratio: 'Incurred Claim Ratio',
+                net_premium_earned: 'Net Premium Earned'
+            };
+
+            setInsuranceControlHidden('insuranceAnalyticsPanels', false);
+
+            if (!selectedInsurer) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer to view analytics.</p>');
+                showPlaceholder('Select an insurer to view analytics');
+                return;
+            }
+
+            if (!allowedMetrics.has(metric)) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select information type to view data.</p>');
+                showPlaceholder('Select information type to view visualization');
+                return;
+            }
+
+            if (!lob) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select LOB to view year-wise data.</p>');
+                showPlaceholder('Select LOB to view visualization');
+                return;
+            }
+
+            if (!window.db || !window.doc || !window.getDoc) {
+                renderLeftPanelHtml('<p class="insurance-data-muted">Database is not initialized yet.</p>');
+                showPlaceholder('Unable to load data');
+                return;
+            }
+
+            renderLeftPanelHtml('<p class="insurance-data-muted">Loading year-wise data...</p>');
+            showPlaceholder('Loading trend data...');
+
+            try {
+                const insurerRef = window.doc(window.db, 'insurers_master_nonlife', selectedInsurer);
+                const insurerSnap = await window.getDoc(insurerRef);
+
+                if (!insurerSnap.exists()) {
+                    resetTimelineState();
+                    hideTimelineControl();
+                    renderGeneralLobMetricTable([], metricLabels[metric] || 'Metric');
+                    showPlaceholder('No data found for selected insurer');
+                    return;
+                }
+
+                const insurerData = insurerSnap.data() || {};
+                const seriesObject = insurerData?.lob_metrics?.[lob]?.[metric];
+
+                if (!seriesObject || typeof seriesObject !== 'object') {
+                    resetTimelineState();
+                    hideTimelineControl();
+                    renderGeneralLobMetricTable([], metricLabels[metric] || 'Metric');
+                    showPlaceholder('No trend data available for selected metric and LOB');
+                    return;
+                }
+
+                const rows = Object.entries(seriesObject)
+                    .map(([year, value]) => ({ year: Number(year), value: Number(value) }))
+                    .filter(item => Number.isFinite(item.year) && Number.isFinite(item.value))
+                    .sort((a, b) => a.year - b.year);
+
+                if (!rows.length) {
+                    resetTimelineState();
+                    hideTimelineControl();
+                    renderGeneralLobMetricTable(rows, metricLabels[metric] || 'Metric');
+                    showPlaceholder('No trend data available for selected metric and LOB');
+                    return;
+                }
+
+                selectedTimeline = 'all_years';
+                refreshMetricPanels(
+                    rows.map(item => ({ year: item.year, premium: item.value })),
+                    metricLabels[metric] || 'Metric',
+                    metric
+                );
+            } catch (error) {
+                console.error('Error loading lob_metrics data:', error);
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Unable to load analytics data right now.</p>');
+                showPlaceholder('Unable to load analytics data');
+            }
         }
 
         function onInfoTypeChange() {
@@ -2182,6 +2415,28 @@ const mobileBottomNavConfig = {
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
             const infoTypeValue = infoTypeSelectEl?.value || '';
             selectedInfoType = infoTypeValue;
+
+            if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'insurer') {
+                const lobEl = document.getElementById('insuranceLobSelect');
+                const lobMetricTypes = new Set(['claims_incurred', 'incurred_claim_ratio', 'net_premium_earned']);
+                selectedInsurerLob = '';
+
+                if (lobEl) {
+                    lobEl.value = '';
+                    lobEl.disabled = true;
+                }
+
+                if (lobMetricTypes.has(infoTypeValue)) {
+                    setInsuranceControlHidden('insuranceLobControlCard', false);
+                    setGeneralInsurerLobOptions();
+                    updateDashboardData();
+                    return;
+                }
+
+                setInsuranceControlHidden('insuranceLobControlCard', true);
+                showSection(infoTypeValue);
+                return;
+            }
 
             if (!infoTypeValue) {
                 hideSegmentDropdown();
@@ -2282,13 +2537,16 @@ const mobileBottomNavConfig = {
                 return;
             }
 
+            const isRatioMetric = currentMetricType === 'incurred_claim_ratio' || /incurred\s*claim\s*ratio/i.test(String(premiumLabel || ''));
+            const unitSuffix = isRatioMetric ? '' : ' (in Crores)';
+
             renderLeftPanelHtml(`
-                <h3 class="insurance-premium-title">${escapeInsuranceHtml(premiumLabel)} (in Crores)</h3>
+                <h3 class="insurance-premium-title">${escapeInsuranceHtml(premiumLabel)}${unitSuffix}</h3>
                 <table class="insurance-data-table insurance-premium-table">
                     <thead>
                         <tr>
                             <th>Year</th>
-                            <th>${escapeInsuranceHtml(premiumLabel)} (in Crores)</th>
+                            <th>${escapeInsuranceHtml(premiumLabel)}${unitSuffix}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2329,13 +2587,17 @@ const mobileBottomNavConfig = {
 
             const labels = rows.map(row => String(row.year));
             const values = rows.map(row => row.premium);
+            const isRatioMetric = currentMetricType === 'incurred_claim_ratio' || /incurred\s*claim\s*ratio/i.test(String(premiumLabel || ''));
+            const datasetLabel = isRatioMetric ? premiumLabel : `${premiumLabel} (in Crores)`;
+            const tooltipSuffix = isRatioMetric ? '' : ' Crores';
+            const yAxisTitle = isRatioMetric ? 'Value' : 'Value (in Crores)';
 
             insurerPremiumChart = new window.Chart(canvas, {
                 type: 'line',
                 data: {
                     labels,
                     datasets: [{
-                        label: `${premiumLabel} (in Crores)`,
+                        label: datasetLabel,
                         data: values,
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.12)',
@@ -2360,7 +2622,7 @@ const mobileBottomNavConfig = {
                         },
                         tooltip: {
                             callbacks: {
-                                label: context => `${formatPremiumValue(context.parsed.y)} Crores`
+                                label: context => `${formatPremiumValue(context.parsed.y)}${tooltipSuffix}`
                             }
                         }
                     },
@@ -2377,7 +2639,7 @@ const mobileBottomNavConfig = {
                         y: {
                             title: {
                                 display: true,
-                                text: 'Value (in Crores)'
+                                text: yAxisTitle
                             },
                             grid: {
                                 color: 'rgba(148, 163, 184, 0.18)'
@@ -2919,10 +3181,12 @@ const mobileBottomNavConfig = {
         window.onInfoTypeChange = onInfoTypeChange;
         window.onSegmentChange = onSegmentChange;
         window.onTimelineChange = onTimelineChange;
+        window.updateDashboardData = updateDashboardData;
         window.showSection = showSection;
         window.showPlaceholder = showPlaceholder;
         window.showInsuranceHandbookCategories = showInsuranceHandbookCategories;
         window.showInsuranceHandbookCategory = showInsuranceHandbookCategory;
+        window.resetInsuranceHandbookSelections = resetInsuranceHandbookSelections;
         window.fetchInsurerDetails = fetchInsurerDetails;
         window.renderBasicInfo = renderBasicInfo;
         window.renderInsurerDetails = renderInsurerDetails;
