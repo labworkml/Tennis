@@ -2001,6 +2001,56 @@ const mobileBottomNavConfig = {
             updateUI(filteredRows);
         }
 
+        function exportInsuranceData() {
+            const rows = applyTimelineFilter(currentMetricRows, selectedTimeline);
+            if (!rows.length) {
+                alert('No data available to export');
+                return;
+            }
+
+            if (!window.XLSX) {
+                alert('Export library is not available. Please refresh and try again.');
+                return;
+            }
+
+            const insurerSelectEl = document.getElementById('insuranceInsurerSelect');
+            const infoSelectEl = document.getElementById('insuranceInfoTypeSelect');
+            const timelineSelectEl = document.getElementById('insuranceTimelineSelect');
+
+            const insurerName = String(currentInsurerData?.insurer_name || insurerSelectEl?.selectedOptions?.[0]?.text || '').trim() || 'Insurer';
+            const infoLabel = String(infoSelectEl?.selectedOptions?.[0]?.text || currentMetricLabel || 'Information').trim() || 'Information';
+            const timelineLabel = String(timelineSelectEl?.selectedOptions?.[0]?.text || 'All Years').trim() || 'All Years';
+
+            const dataRows = rows.map(row => {
+                const yearValue = row?.year ?? '';
+                const rawValue = row?.premium ?? row?.value ?? '';
+                const numericValue = Number(rawValue);
+                return [
+                    yearValue,
+                    Number.isFinite(numericValue) ? numericValue : rawValue
+                ];
+            });
+
+            const sheetData = [
+                ['Insurer Name', insurerName],
+                ['Information', infoLabel],
+                ['Timeline', timelineLabel],
+                [],
+                ['Year', 'Value'],
+                ...dataRows
+            ];
+
+            const worksheet = window.XLSX.utils.aoa_to_sheet(sheetData);
+            const workbook = window.XLSX.utils.book_new();
+            window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+
+            const safeInsurer = insurerName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+            const safeInfo = infoLabel.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+            const filename = `${safeInsurer || 'Insurer'}_${safeInfo || 'Information'}.xlsx`;
+
+            window.XLSX.writeFile(workbook, filename);
+        }
+
         function renderLeftPanelHtml(contentHtml) {
             const panelEl = document.getElementById('insuranceLeftPanelContent');
             if (!panelEl) return;
@@ -2009,16 +2059,30 @@ const mobileBottomNavConfig = {
 
         function getPremiumInfoMeta(infoType = '') {
             const normalizedType = String(infoType || '').toLowerCase();
-            if (normalizedType === 'gross_direct_premium') {
-                return {
+            const infoMap = {
+                gross_direct_premium: {
                     field: 'gross_direct_premium',
                     label: 'Gross Direct Premium'
-                };
-            }
-            return {
-                field: 'total_premium',
-                label: 'Total Premium'
+                },
+                commission_expenses_management: {
+                    field: 'commission_expenses_management',
+                    label: 'Commission Expenses - Management'
+                },
+                premium_deficiency: {
+                    field: 'premium_deficiency',
+                    label: 'Premium Deficiency'
+                },
+                underwriting_profit_loss: {
+                    field: 'underwriting_profit_loss',
+                    label: 'Underwriting Profit / Loss'
+                },
+                total_premium: {
+                    field: 'total_premium',
+                    label: 'Total Premium'
+                }
             };
+
+            return infoMap[normalizedType] || infoMap.total_premium;
         }
 
         function formatSegmentLabel(segment) {
@@ -2078,6 +2142,9 @@ const mobileBottomNavConfig = {
                 return [
                     { value: 'basic', label: 'Basic Info' },
                     { value: 'gross_direct_premium', label: 'Gross Direct Premium' },
+                    { value: 'commission_expenses_management', label: 'Commission Expenses - Management' },
+                    { value: 'premium_deficiency', label: 'Premium Deficiency' },
+                    { value: 'underwriting_profit_loss', label: 'Underwriting Profit / Loss' },
                     { value: 'segment_gdp', label: 'Segment GDP' },
                     { value: 'claims_incurred', label: 'Net Claims Incurred' },
                     { value: 'incurred_claim_ratio', label: 'Incurred Claim Ratio' },
@@ -2155,7 +2222,15 @@ const mobileBottomNavConfig = {
                 return;
             }
 
-            if (section === 'total_premium' || section === 'gross_direct_premium') {
+            const premiumSections = new Set([
+                'total_premium',
+                'gross_direct_premium',
+                'commission_expenses_management',
+                'premium_deficiency',
+                'underwriting_profit_loss'
+            ]);
+
+            if (premiumSections.has(section)) {
                 const premiumMeta = getPremiumInfoMeta(section);
                 if (currentInsurerData) {
                     const premiumData = currentInsurerData[premiumMeta.field] || {};
@@ -2856,6 +2931,9 @@ const mobileBottomNavConfig = {
                     foreign_partners: row.foreign_partners || 'â€”',
                     total_premium: row.total_premium || {},
                     gross_direct_premium: row.gross_direct_premium || {},
+                    commission_expenses_management: row.commission_expenses_management || {},
+                    premium_deficiency: row.premium_deficiency || {},
+                    underwriting_profit_loss: row.underwriting_profit_loss || {},
                     segment_gdp: row.segment_gdp || {},
                 };
             } catch (error) {
@@ -3181,6 +3259,7 @@ const mobileBottomNavConfig = {
         window.onInfoTypeChange = onInfoTypeChange;
         window.onSegmentChange = onSegmentChange;
         window.onTimelineChange = onTimelineChange;
+        window.exportInsuranceData = exportInsuranceData;
         window.updateDashboardData = updateDashboardData;
         window.showSection = showSection;
         window.showPlaceholder = showPlaceholder;

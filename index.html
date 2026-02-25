@@ -2503,14 +2503,14 @@ input:focus,textarea:focus,select:focus{
                             <div class="insurance-card" onclick="showInsuranceView('companies')">
                                 <div class="insurance-card-icon">📊</div>
                                 <h3 class="insurance-card-title">Insurance Handbook Statistics</h3>
-                                <p class="insurance-card-desc">Review insurer type, solvency profile, and financial notes for quick analysis.</p>
+                                <p class="insurance-card-desc">2024-25 Handbook Statistics - Analysis and Export</p>
                             </div>
                         </div>
                         <div class="insurance-intelligence-layer">
                             <div class="insurance-card insurance-intelligence-card" onclick="showInsuranceView('ai')">
                                 <div class="insurance-card-icon">🧞‍♂️✨</div>
                                 <h3 class="insurance-card-title">Insurance Intelligence</h3>
-                                <p class="insurance-card-desc">Delivers insight-driven guidance using handbook statistics and your insurance context.</p>
+                                <p class="insurance-card-desc">Delivers insight driven guidance using handbook statistics</p>
                             </div>
                         </div>
                     </div>
@@ -2521,7 +2521,7 @@ input:focus,textarea:focus,select:focus{
                         </div>
                         <div class="insurance-section-header" style="margin-bottom:0.6rem;align-items:center;">
                             <h1 style="margin:0;">Insurance Handbook Statistics</h1>
-                            <button id="insuranceHandbookRefreshBtn" class="submit-btn btn-muted btn-sm" onclick="resetInsuranceHandbookSelections()" title="Clear selections and start fresh" aria-label="Refresh selections" style="display:none;width:auto;min-width:40px;padding:0.45rem 0.65rem;">⟳</button>
+                            <button id="insuranceHandbookRefreshBtn" class="submit-btn btn-sm" onclick="resetInsuranceHandbookSelections()" title="Clear selections and start fresh" aria-label="Refresh selections" style="display:none;width:auto;min-width:40px;padding:0.45rem 0.65rem;margin-right:0.5rem;">⟳</button>
                         </div>
 
                         <div id="insuranceHandbookCategoryGrid" class="insurance-grid">
@@ -2570,7 +2570,7 @@ input:focus,textarea:focus,select:focus{
 
                                 <div id="insuranceInsurerControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
                                     <label for="insuranceInsurerSelect">Select Insurer</label>
-                                    <select id="insuranceInsurerSelect" onchange="onInsurerChange(this.value)">
+                                    <select id="insuranceInsurerSelect" onchange="onInsurerChange(this.value)" disabled>
                                         <option value="">Loading insurers...</option>
                                     </select>
                                 </div>
@@ -2623,6 +2623,8 @@ input:focus,textarea:focus,select:focus{
                                                 <option value="all_years">All Years</option>
                                             </select>
                                         </div>
+                                        <!-- Export to Excel button in Data Panel header -->
+                                        <button id="insuranceExportBtn" class="submit-btn btn-sm" onclick="exportInsuranceData()">Export to Excel</button>
                                     </div>
                                     <div id="insuranceLeftPanelContent">
                                         <p class="insurance-data-muted">Select an insurer to view analytics.</p>
@@ -8254,6 +8256,7 @@ firebase.auth().signInAnonymously()
   .catch(err => console.error(err));
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/modules/tennis.js"></script>
 <script src="js/modules/ai.js"></script>
