@@ -760,11 +760,20 @@ const mobileBottomNavConfig = {
         let selectedStateName = '';
         let selectedStateLob = '';
         let selectedInsurerLob = '';
+        let selectedInvestmentCategory = '';
         let selectedTimeline = 'all_years';
         let currentMetricRows = [];
         let currentMetricLabel = '';
         let currentMetricType = '';
         const segmentOptions = ['fire', 'marine', 'motor', 'health_pa_travel', 'others'];
+        const investmentCategoryOptions = [
+            { value: 'Approved_Investments', label: 'Approved Investments' },
+            { value: 'Central_Government_Securities', label: 'Central Government Securities' },
+            { value: 'Housing_and_Loans_to_State_Government_for_Housing_and_FFE', label: 'Housing and Loans to State Government for Housing and FFE' },
+            { value: 'Infrastructure_Investments', label: 'Infrastructure Investments' },
+            { value: 'Other_Investments', label: 'Other Investments' },
+            { value: 'Total_Investments', label: 'Total Investments' }
+        ];
         let moduleAccessState = {
             insuranceOnlyUser: false,
             allowedModules: null
@@ -909,11 +918,13 @@ const mobileBottomNavConfig = {
             selectedStateName = '';
             selectedStateLob = '';
             selectedInsurerLob = '';
+            selectedInvestmentCategory = '';
 
             const domainEl = document.getElementById('insuranceDomainSelect');
             const insurerEl = document.getElementById('insuranceInsurerSelect');
             const stateEl = document.getElementById('insuranceStateSelect');
             const infoEl = document.getElementById('insuranceInfoTypeSelect');
+            const categoryEl = document.getElementById('insuranceCategorySelect');
             const lobEl = document.getElementById('insuranceLobSelect');
             const segmentEl = document.getElementById('insuranceSegmentSelect');
 
@@ -926,6 +937,10 @@ const mobileBottomNavConfig = {
             if (infoEl) {
                 infoEl.value = '';
                 infoEl.disabled = true;
+            }
+            if (categoryEl) {
+                categoryEl.value = '';
+                categoryEl.disabled = true;
             }
             if (lobEl) {
                 lobEl.value = '';
@@ -940,6 +955,7 @@ const mobileBottomNavConfig = {
             setInsuranceControlHidden('insuranceInsurerControlCard', true);
             setInsuranceControlHidden('insuranceStateControlCard', true);
             setInsuranceControlHidden('insuranceInfoControlCard', true);
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             setInsuranceControlHidden('insuranceLobControlCard', true);
             setInsuranceControlHidden('insuranceSegmentControlCard', true);
             setInsuranceControlHidden('insuranceAnalyticsPanels', true);
@@ -954,6 +970,7 @@ const mobileBottomNavConfig = {
             setInsuranceControlHidden('insuranceInsurerControlCard', false);
             setInsuranceControlHidden('insuranceStateControlCard', true);
             setInsuranceControlHidden('insuranceInfoControlCard', false);
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             setInsuranceControlHidden('insuranceLobControlCard', true);
             setInsuranceControlHidden('insuranceSegmentControlCard', true);
             setInsuranceControlHidden('insuranceAnalyticsPanels', false);
@@ -962,6 +979,7 @@ const mobileBottomNavConfig = {
             selectedStateName = '';
             selectedStateLob = '';
             selectedInsurerLob = '';
+            selectedInvestmentCategory = '';
 
             refreshInsuranceInfoTypeOptions();
             loadInsurersDropdown();
@@ -1203,6 +1221,7 @@ const mobileBottomNavConfig = {
                 setInsuranceControlHidden('insuranceInsurerControlCard', true);
                 setInsuranceControlHidden('insuranceStateControlCard', false);
                 setInsuranceControlHidden('insuranceInfoControlCard', true);
+                setInsuranceControlHidden('insuranceCategoryControlCard', true);
                 setInsuranceControlHidden('insuranceLobControlCard', true);
                 setInsuranceControlHidden('insuranceSegmentControlCard', true);
                 setInsuranceControlHidden('insuranceAnalyticsPanels', true);
@@ -1217,6 +1236,7 @@ const mobileBottomNavConfig = {
             setInsuranceControlHidden('insuranceInsurerControlCard', true);
             setInsuranceControlHidden('insuranceStateControlCard', true);
             setInsuranceControlHidden('insuranceInfoControlCard', true);
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             setInsuranceControlHidden('insuranceLobControlCard', true);
             setInsuranceControlHidden('insuranceSegmentControlCard', true);
             setInsuranceControlHidden('insuranceAnalyticsPanels', true);
@@ -1324,6 +1344,7 @@ const mobileBottomNavConfig = {
             selectedStateName = '';
             selectedStateLob = '';
             selectedInsurerLob = '';
+            selectedInvestmentCategory = '';
             resetTimelineState();
             hideTimelineControl();
             hideSegmentDropdown();
@@ -1354,6 +1375,7 @@ const mobileBottomNavConfig = {
             selectedStateName = '';
             selectedStateLob = '';
             selectedInsurerLob = '';
+            selectedInvestmentCategory = '';
             resetTimelineState();
             hideTimelineControl();
             hideSegmentDropdown();
@@ -1361,6 +1383,7 @@ const mobileBottomNavConfig = {
             const insurerEl = document.getElementById('insuranceInsurerSelect');
             const stateEl = document.getElementById('insuranceStateSelect');
             const infoEl = document.getElementById('insuranceInfoTypeSelect');
+            const categoryEl = document.getElementById('insuranceCategorySelect');
             const lobEl = document.getElementById('insuranceLobSelect');
             const segmentEl = document.getElementById('insuranceSegmentSelect');
 
@@ -1372,6 +1395,10 @@ const mobileBottomNavConfig = {
             if (infoEl) {
                 infoEl.value = '';
                 infoEl.disabled = true;
+            }
+            if (categoryEl) {
+                categoryEl.value = '';
+                categoryEl.disabled = true;
             }
             if (lobEl) {
                 lobEl.value = '';
@@ -1391,6 +1418,7 @@ const mobileBottomNavConfig = {
             setInsuranceControlHidden('insuranceInsurerControlCard', false);
             setInsuranceControlHidden('insuranceStateControlCard', true);
             setInsuranceControlHidden('insuranceInfoControlCard', false);
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             setInsuranceControlHidden('insuranceLobControlCard', true);
             setInsuranceControlHidden('insuranceSegmentControlCard', true);
             setInsuranceControlHidden('insuranceAnalyticsPanels', false);
@@ -1424,6 +1452,7 @@ const mobileBottomNavConfig = {
                 selectedStateName = '';
                 selectedStateLob = '';
                 selectedInsurerLob = '';
+                selectedInvestmentCategory = '';
                 resetTimelineState();
                 hideTimelineControl();
                 if (insuranceHandbookCategory === 'general') {
@@ -1433,6 +1462,7 @@ const mobileBottomNavConfig = {
                     setInsuranceControlHidden('insuranceInsurerControlCard', false);
                     setInsuranceControlHidden('insuranceStateControlCard', true);
                     setInsuranceControlHidden('insuranceInfoControlCard', false);
+                    setInsuranceControlHidden('insuranceCategoryControlCard', true);
                     setInsuranceControlHidden('insuranceLobControlCard', true);
                     setInsuranceControlHidden('insuranceSegmentControlCard', true);
                     setInsuranceControlHidden('insuranceAnalyticsPanels', false);
@@ -2018,7 +2048,11 @@ const mobileBottomNavConfig = {
             const timelineSelectEl = document.getElementById('insuranceTimelineSelect');
 
             const insurerName = String(currentInsurerData?.insurer_name || insurerSelectEl?.selectedOptions?.[0]?.text || '').trim() || 'Insurer';
-            const infoLabel = String(infoSelectEl?.selectedOptions?.[0]?.text || currentMetricLabel || 'Information').trim() || 'Information';
+            const infoLabel = String(
+                currentMetricType === 'investments_under_management'
+                    ? (currentMetricLabel || infoSelectEl?.selectedOptions?.[0]?.text || 'Information')
+                    : (infoSelectEl?.selectedOptions?.[0]?.text || currentMetricLabel || 'Information')
+            ).trim() || 'Information';
             const timelineLabel = String(timelineSelectEl?.selectedOptions?.[0]?.text || 'All Years').trim() || 'All Years';
 
             const dataRows = rows.map(row => {
@@ -2063,6 +2097,10 @@ const mobileBottomNavConfig = {
                 gross_direct_premium: {
                     field: 'gross_direct_premium',
                     label: 'Gross Direct Premium'
+                },
+                equity_share_capital: {
+                    field: 'equity_share_capital',
+                    label: 'Equity Share Capital'
                 },
                 commission_expenses_management: {
                     field: 'commission_expenses_management',
@@ -2142,6 +2180,8 @@ const mobileBottomNavConfig = {
                 return [
                     { value: 'basic', label: 'Basic Info' },
                     { value: 'gross_direct_premium', label: 'Gross Direct Premium' },
+                    { value: 'equity_share_capital', label: 'Equity Share Capital' },
+                    { value: 'investments_under_management', label: 'Investments Under Management' },
                     { value: 'commission_expenses_management', label: 'Commission Expenses - Management' },
                     { value: 'premium_deficiency', label: 'Premium Deficiency' },
                     { value: 'underwriting_profit_loss', label: 'Underwriting Profit / Loss' },
@@ -2190,6 +2230,7 @@ const mobileBottomNavConfig = {
 
         function refreshInsuranceInfoTypeOptions() {
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+            const categorySelectEl = document.getElementById('insuranceCategorySelect');
             if (!infoTypeSelectEl) return;
 
             const options = getInfoTypeOptionsForCategory();
@@ -2201,7 +2242,106 @@ const mobileBottomNavConfig = {
             infoTypeSelectEl.value = '';
             infoTypeSelectEl.disabled = true;
             selectedInfoType = '';
+            selectedInvestmentCategory = '';
+            if (categorySelectEl) {
+                setInsuranceSelectOptions(categorySelectEl, [], 'Choose category');
+                categorySelectEl.value = '';
+                categorySelectEl.disabled = true;
+            }
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             hideSegmentDropdown();
+        }
+
+        function normalizeInsuranceFieldKey(value) {
+            return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function formatInvestmentCategoryLabel(categoryKey) {
+            const match = investmentCategoryOptions.find(item => item.value === categoryKey);
+            if (match) return match.label;
+            return formatSegmentLabel(categoryKey);
+        }
+
+        function resolveInvestmentCategoryData(investmentsMap, requestedCategory) {
+            if (!investmentsMap || typeof investmentsMap !== 'object') {
+                return {};
+            }
+
+            if (investmentsMap[requestedCategory]) {
+                return investmentsMap[requestedCategory];
+            }
+
+            const targetKey = normalizeInsuranceFieldKey(requestedCategory);
+            const matchingEntry = Object.entries(investmentsMap).find(([key]) => normalizeInsuranceFieldKey(key) === targetKey);
+            return matchingEntry ? matchingEntry[1] : {};
+        }
+
+        function populateInvestmentCategoryOptions() {
+            const categorySelectEl = document.getElementById('insuranceCategorySelect');
+            if (!categorySelectEl) return;
+
+            setInsuranceSelectOptions(categorySelectEl, investmentCategoryOptions, 'Choose category');
+            categorySelectEl.disabled = !selectedInsurer;
+            categorySelectEl.value = selectedInvestmentCategory || '';
+        }
+
+        async function loadInvestmentsUnderManagement() {
+            if (!selectedInsurer) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select an insurer first to view Investments Under Management data.</p>');
+                showPlaceholder('Select an insurer first to view trend chart');
+                return;
+            }
+
+            if (!selectedInvestmentCategory) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Select category to view Investments Under Management data.</p>');
+                showPlaceholder('Select category to view trend chart');
+                return;
+            }
+
+            if (!currentInsurerData || String(currentInsurerData.reg_no || '') !== selectedInsurer) {
+                await loadInsurerData(selectedInsurer);
+            }
+
+            if (!currentInsurerData) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml('<p class="insurance-data-muted">Unable to load insurer details. Please try again.</p>');
+                showPlaceholder('Unable to load Investments Under Management trend');
+                return;
+            }
+
+            const investmentsMap = currentInsurerData.investments_under_management || {};
+            const categoryData = resolveInvestmentCategoryData(investmentsMap, selectedInvestmentCategory);
+            const rows = normalizePremiumData(categoryData);
+            const categoryLabel = formatInvestmentCategoryLabel(selectedInvestmentCategory);
+
+            if (!rows.length) {
+                resetTimelineState();
+                hideTimelineControl();
+                renderLeftPanelHtml(`<p class="insurance-data-muted">No Investments Under Management data available for ${escapeInsuranceHtml(categoryLabel)}.</p>`);
+                showPlaceholder(`No trend data available for ${categoryLabel}`);
+                return;
+            }
+
+            refreshMetricPanels(rows, `Investments Under Management - ${categoryLabel}`, 'investments_under_management');
+        }
+
+        function onInvestmentCategoryChange(categoryValue) {
+            if (insuranceHandbookCategory !== 'general' || insuranceAnalyticsDomain !== 'insurer') {
+                return;
+            }
+
+            selectedInvestmentCategory = String(categoryValue || '').trim();
+
+            if (selectedInfoType !== 'investments_under_management') {
+                return;
+            }
+
+            loadInvestmentsUnderManagement();
         }
 
         function showSection(sectionName) {
@@ -2225,6 +2365,7 @@ const mobileBottomNavConfig = {
             const premiumSections = new Set([
                 'total_premium',
                 'gross_direct_premium',
+                'equity_share_capital',
                 'commission_expenses_management',
                 'premium_deficiency',
                 'underwriting_profit_loss'
@@ -2286,12 +2427,14 @@ const mobileBottomNavConfig = {
             }
 
             const infoTypeSelectEl = document.getElementById('insuranceInfoTypeSelect');
+            const categorySelectEl = document.getElementById('insuranceCategorySelect');
             const segmentSelectEl = document.getElementById('insuranceSegmentSelect');
             const lobEl = document.getElementById('insuranceLobSelect');
 
             selectedInsurer = String(regNo || '');
             selectedSegment = '';
             selectedInsurerLob = '';
+            selectedInvestmentCategory = '';
 
             if (segmentSelectEl) {
                 segmentSelectEl.value = '';
@@ -2302,6 +2445,13 @@ const mobileBottomNavConfig = {
                 infoTypeSelectEl.value = '';
                 infoTypeSelectEl.disabled = !regNo;
             }
+
+            if (categorySelectEl) {
+                setInsuranceSelectOptions(categorySelectEl, [], 'Choose category');
+                categorySelectEl.value = '';
+                categorySelectEl.disabled = true;
+            }
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
 
             if (lobEl) {
                 lobEl.value = '';
@@ -2468,6 +2618,7 @@ const mobileBottomNavConfig = {
 
                 selectedStateLob = '';
                 setInsuranceControlHidden('insuranceAnalyticsPanels', true);
+                setInsuranceControlHidden('insuranceCategoryControlCard', true);
 
                 if (infoTypeValue !== 'lob') {
                     setInsuranceControlHidden('insuranceLobControlCard', true);
@@ -2493,27 +2644,46 @@ const mobileBottomNavConfig = {
 
             if (insuranceHandbookCategory === 'general' && insuranceAnalyticsDomain === 'insurer') {
                 const lobEl = document.getElementById('insuranceLobSelect');
+                const categorySelectEl = document.getElementById('insuranceCategorySelect');
                 const lobMetricTypes = new Set(['claims_incurred', 'incurred_claim_ratio', 'net_premium_earned']);
                 selectedInsurerLob = '';
+                selectedInvestmentCategory = '';
 
                 if (lobEl) {
                     lobEl.value = '';
                     lobEl.disabled = true;
                 }
 
+                if (categorySelectEl) {
+                    setInsuranceSelectOptions(categorySelectEl, [], 'Choose category');
+                    categorySelectEl.value = '';
+                    categorySelectEl.disabled = true;
+                }
+
                 if (lobMetricTypes.has(infoTypeValue)) {
+                    setInsuranceControlHidden('insuranceCategoryControlCard', true);
                     setInsuranceControlHidden('insuranceLobControlCard', false);
                     setGeneralInsurerLobOptions();
                     updateDashboardData();
                     return;
                 }
 
+                if (infoTypeValue === 'investments_under_management') {
+                    setInsuranceControlHidden('insuranceLobControlCard', true);
+                    setInsuranceControlHidden('insuranceCategoryControlCard', false);
+                    populateInvestmentCategoryOptions();
+                    loadInvestmentsUnderManagement();
+                    return;
+                }
+
                 setInsuranceControlHidden('insuranceLobControlCard', true);
+                setInsuranceControlHidden('insuranceCategoryControlCard', true);
                 showSection(infoTypeValue);
                 return;
             }
 
             if (!infoTypeValue) {
+                setInsuranceControlHidden('insuranceCategoryControlCard', true);
                 hideSegmentDropdown();
                 resetTimelineState();
                 hideTimelineControl();
@@ -2523,10 +2693,12 @@ const mobileBottomNavConfig = {
             }
 
             if (infoTypeValue === 'segment_gdp') {
+                setInsuranceControlHidden('insuranceCategoryControlCard', true);
                 showSection(infoTypeValue);
                 return;
             }
 
+            setInsuranceControlHidden('insuranceCategoryControlCard', true);
             hideSegmentDropdown();
 
             showSection(infoTypeValue);
@@ -2931,10 +3103,12 @@ const mobileBottomNavConfig = {
                     foreign_partners: row.foreign_partners || 'â€”',
                     total_premium: row.total_premium || {},
                     gross_direct_premium: row.gross_direct_premium || {},
+                    equity_share_capital: row.equity_share_capital || row.Equity_Share_Capital || {},
                     commission_expenses_management: row.commission_expenses_management || {},
                     premium_deficiency: row.premium_deficiency || {},
                     underwriting_profit_loss: row.underwriting_profit_loss || {},
                     segment_gdp: row.segment_gdp || {},
+                    investments_under_management: row.investments_under_management || {},
                 };
             } catch (error) {
                 console.error('Error loading insurer data:', error);
@@ -3257,6 +3431,7 @@ const mobileBottomNavConfig = {
         window.onInsuranceLobChange = onInsuranceLobChange;
         window.onInsurerChange = onInsurerChange;
         window.onInfoTypeChange = onInfoTypeChange;
+        window.onInvestmentCategoryChange = onInvestmentCategoryChange;
         window.onSegmentChange = onSegmentChange;
         window.onTimelineChange = onTimelineChange;
         window.exportInsuranceData = exportInsuranceData;
@@ -3274,6 +3449,7 @@ const mobileBottomNavConfig = {
         window.showSegmentDropdown = showSegmentDropdown;
         window.hideSegmentDropdown = hideSegmentDropdown;
         window.loadSegmentGDP = loadSegmentGDP;
+        window.loadInvestmentsUnderManagement = loadInvestmentsUnderManagement;
         window.renderSegmentTable = renderSegmentTable;
         window.renderSegmentChart = renderSegmentChart;
         window.populateTimelineDropdown = populateTimelineDropdown;

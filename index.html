@@ -2588,7 +2588,16 @@ input:focus,textarea:focus,select:focus{
                                         <option value="">Choose information type</option>
                                         <option value="basic">Basic Info</option>
                                         <option value="gross_direct_premium">Gross Direct Premium</option>
+                                        <option value="equity_share_capital">Equity Share Capital</option>
                                         <option value="segment_gdp">Segment GDP</option>
+                                        <option value="investments_under_management">Investments Under Management</option>
+                                    </select>
+                                </div>
+
+                                <div id="insuranceCategoryControlCard" class="insurance-data-card insurance-analytics-control-card insurance-hidden">
+                                    <label for="insuranceCategorySelect">Select Category</label>
+                                    <select id="insuranceCategorySelect" onchange="onInvestmentCategoryChange(this.value)" disabled>
+                                        <option value="">Choose category</option>
                                     </select>
                                 </div>
 
