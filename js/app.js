@@ -1041,7 +1041,7 @@ const mobileBottomNavConfig = {
 
                 const options = Array.from(lobSet)
                     .sort((a, b) => a.localeCompare(b))
-                    .map(lob => ({ value: lob, label: lob }));
+                    .map(lob => ({ value: lob, label: formatInsuranceLobLabel(lob) }));
 
                 setInsuranceSelectOptions(lobEl, options, 'Choose lob');
                 lobEl.disabled = false;
@@ -1056,16 +1056,30 @@ const mobileBottomNavConfig = {
             if (!lobEl) return;
 
             const options = [
-                { value: 'all_segments', label: 'all_segments' },
-                { value: 'fire', label: 'fire' },
-                { value: 'health', label: 'health' },
-                { value: 'marine', label: 'marine' },
-                { value: 'motor', label: 'motor' },
-                { value: 'other_segments', label: 'other_segments' }
+                { value: 'all_segments', label: 'All Segments' },
+                { value: 'fire', label: 'Fire' },
+                { value: 'health', label: 'Health' },
+                { value: 'marine', label: 'Marine' },
+                { value: 'motor', label: 'Motor' },
+                { value: 'other_segments', label: 'Other Segments' }
             ];
 
             setInsuranceSelectOptions(lobEl, options, 'Choose lob');
             lobEl.disabled = false;
+        }
+
+        function formatInsuranceLobLabel(lobValue) {
+            const normalized = String(lobValue || '').toLowerCase();
+            const lobLabelMap = {
+                all_segments: 'All Segments',
+                fire: 'Fire',
+                health: 'Health',
+                marine: 'Marine',
+                motor: 'Motor',
+                other_segments: 'Other Segments'
+            };
+
+            return lobLabelMap[normalized] || formatSegmentLabel(normalized);
         }
 
         function formatCrores(value) {
@@ -1080,8 +1094,10 @@ const mobileBottomNavConfig = {
                 return;
             }
 
+            const lobSuffix = selectedStateLob ? ` - ${formatInsuranceLobLabel(selectedStateLob)}` : '';
+
             renderLeftPanelHtml(`
-                <h3 class="insurance-premium-title">State LOB Values</h3>
+                <h3 class="insurance-premium-title">State LOB Values${escapeInsuranceHtml(lobSuffix)}</h3>
                 <table class="insurance-data-table insurance-premium-table">
                     <thead>
                         <tr>
@@ -1129,7 +1145,7 @@ const mobileBottomNavConfig = {
                 data: {
                     labels: rows.map(row => String(row.year)),
                     datasets: [{
-                        label: `${selectedStateName || selectedStateCode} - ${selectedStateLob}`,
+                        label: `${selectedStateName || selectedStateCode} - ${formatInsuranceLobLabel(selectedStateLob)}`,
                         data: rows.map(row => Number(row.value) || 0),
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.12)',
@@ -2596,9 +2612,12 @@ const mobileBottomNavConfig = {
                 }
 
                 selectedTimeline = 'all_years';
+                const metricLabel = metric === 'incurred_claim_ratio'
+                    ? `${metricLabels[metric] || 'Metric'} - ${formatInsuranceLobLabel(lob)}`
+                    : (metricLabels[metric] || 'Metric');
                 refreshMetricPanels(
                     rows.map(item => ({ year: item.year, premium: item.value })),
-                    metricLabels[metric] || 'Metric',
+                    metricLabel,
                     metric
                 );
             } catch (error) {
