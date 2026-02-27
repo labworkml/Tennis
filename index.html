@@ -2942,6 +2942,179 @@ input:focus,textarea:focus,select:focus{
     gap:0.95rem;
 }
 
+/* Insurance Handbook Statistics Module - Premium UI (visual-only) */
+#insurancehandbookstatisticsContainer{
+    --ihs-accent:#1f8fff;
+    --ihs-accent-soft:#eaf4ff;
+    --ihs-text:#102a43;
+    --ihs-muted:#62748a;
+    --ihs-border:#d8e4f0;
+    --ihs-card:#ffffff;
+    background:
+        radial-gradient(circle at 7% 5%, rgba(31,143,255,0.08), transparent 36%),
+        radial-gradient(circle at 93% 96%, rgba(16,185,129,0.08), transparent 34%),
+        linear-gradient(180deg,#f6f9fd,#eef4fb);
+    border:1px solid rgba(191,209,228,0.62);
+    border-radius:22px;
+    padding:0.9rem;
+    color:var(--ihs-text);
+}
+
+#insurancehandbookstatisticsContainer .insurance-view.active{
+    animation:fadeIn 0.25s ease;
+}
+
+#insurancehandbookstatisticsHomeView > .insurance-section-header{
+    margin-bottom:1.2rem !important;
+    padding:1.08rem 1.15rem;
+    border:1px solid var(--ihs-border);
+    border-radius:18px;
+    background:
+        radial-gradient(circle at 10% 12%, rgba(31,143,255,0.12), transparent 38%),
+        linear-gradient(180deg,#ffffff,#f7fbff);
+    box-shadow:
+        0 14px 30px rgba(15,23,42,0.09),
+        0 1px 0 rgba(255,255,255,0.9) inset;
+}
+
+#insurancehandbookstatisticsHomeView h1{
+    font-size:clamp(1.46rem,2.1vw,1.92rem);
+    font-weight:700;
+    letter-spacing:-0.03em;
+    line-height:1.2;
+    color:#0f2944;
+}
+
+#insurancehandbookstatisticsContainer .insurance-grid{
+    margin-top:0;
+    gap:0.96rem;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    align-items:stretch;
+}
+
+#insurancehandbookstatisticsContainer .insurance-card{
+    min-height:198px;
+    padding:1.25rem 1.08rem;
+    border-radius:18px;
+    border:1px solid var(--ihs-border);
+    background:linear-gradient(180deg,var(--ihs-card),#f7fbff);
+    box-shadow:
+        0 12px 26px rgba(15,23,42,0.08),
+        0 1px 0 rgba(255,255,255,0.95) inset;
+    text-align:center;
+    align-items:center;
+    justify-content:center;
+    gap:0.72rem;
+}
+
+#insurancehandbookstatisticsContainer .insurance-card:hover{
+    transform:translateY(-4px);
+    border-color:#b7d4f1;
+    box-shadow:
+        0 18px 34px rgba(15,23,42,0.12),
+        0 1px 0 rgba(255,255,255,0.98) inset;
+}
+
+#insurancehandbookstatisticsContainer .insurance-card-icon{
+    width:54px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    border:1px solid #d6e5f5;
+    background:linear-gradient(180deg,#ffffff,var(--ihs-accent-soft));
+    box-shadow:0 10px 22px rgba(15,23,42,0.1);
+    font-size:1.52rem;
+}
+
+#insurancehandbookstatisticsContainer .insurance-card-title{
+    font-size:1.05rem;
+    font-weight:700;
+    letter-spacing:-0.018em;
+    color:#0f2944;
+}
+
+#insurancehandbookstatisticsContainer .insurance-card-desc,
+#insurancehandbookstatisticsContainer .insurance-data-muted{
+    font-size:0.91rem;
+    line-height:1.58;
+    color:var(--ihs-muted);
+    max-width:30ch;
+    margin:0 auto;
+}
+
+#insurancehandbookstatisticsContainer .insurance-section-header{
+    margin-bottom:0.7rem;
+}
+
+#insurancehandbookstatisticsContainer .insurance-back-btn{
+    border-radius:12px;
+    border:1px solid #d4e3f2;
+    box-shadow:0 6px 14px rgba(15,23,42,0.09);
+    padding:0.5rem 0.92rem;
+}
+
+#insurancehandbookstatisticsContainer .insurance-data-card{
+    border-radius:16px;
+    border:1px solid var(--ihs-border);
+    background:linear-gradient(180deg,#ffffff,#f7fbff);
+    box-shadow:
+        0 12px 26px rgba(15,23,42,0.08),
+        0 1px 0 rgba(255,255,255,0.9) inset;
+    padding:1.05rem;
+}
+
+#insurancehandbookstatisticsContainer .insurance-data-card .insurance-card-title{
+    font-size:1.11rem;
+}
+
+#insurancehandbookstatisticsContainer input,
+#insurancehandbookstatisticsContainer select,
+#insurancehandbookstatisticsContainer textarea{
+    border:1px solid #d5e3f1;
+    border-radius:12px;
+    background:linear-gradient(180deg,#ffffff,#f9fcff);
+}
+
+@media (max-width: 768px) {
+    #insurancehandbookstatisticsContainer{
+        border-radius:18px;
+        padding:0.62rem;
+    }
+
+    #insurancehandbookstatisticsHomeView > .insurance-section-header{
+        padding:0.88rem;
+        border-radius:14px;
+        margin-bottom:0.82rem !important;
+    }
+
+    #insurancehandbookstatisticsContainer .insurance-grid{
+        gap:0.72rem;
+    }
+
+    #insurancehandbookstatisticsContainer .insurance-card{
+        min-height:168px;
+        padding:0.92rem 0.86rem;
+        border-radius:16px;
+    }
+
+    #insurancehandbookstatisticsContainer .insurance-card-icon{
+        width:48px;
+        height:48px;
+        font-size:1.38rem;
+    }
+
+    #insurancehandbookstatisticsContainer .insurance-card-title{
+        font-size:1rem;
+    }
+
+    #insurancehandbookstatisticsContainer .insurance-card-desc,
+    #insurancehandbookstatisticsContainer .insurance-data-muted{
+        font-size:0.86rem;
+    }
+}
+
 @media (max-width: 768px) {
     #insuranceContainer{
         border-radius:16px;
@@ -3411,6 +3584,92 @@ input:focus,textarea:focus,select:focus{
                                 <button class="submit-btn" onclick="saveInsuranceNoteDummy()">Save Note</button>
                                 <button class="submit-btn btn-muted" onclick="closeInsuranceNoteFormModal()">Cancel</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="insurancehandbookstatisticsContainer" style="display:none;">
+                    <div id="insurancehandbookstatisticsHomeView" class="insurance-view active">
+                        <div class="insurance-section-header" style="margin-bottom:0.6rem;align-items:center;">
+                            <h1 style="margin:0;">Insurance Handbook Statistics</h1>
+                        </div>
+
+                        <div class="insurance-grid">
+                            <div class="insurance-card" onclick="showInsuranceHandbookStatisticsContainer('life')">
+                                <div class="insurance-card-icon">👨‍👩‍👧‍👦</div>
+                                <h3 class="insurance-card-title">Life</h3>
+                                <p class="insurance-card-desc">Life insurance handbook statistics</p>
+                            </div>
+                            <div class="insurance-card" onclick="showInsuranceHandbookStatisticsContainer('general')">
+                                <div class="insurance-card-icon">🏢</div>
+                                <h3 class="insurance-card-title">General</h3>
+                                <p class="insurance-card-desc">General insurance handbook statistics.</p>
+                            </div>
+                            <div class="insurance-card" onclick="showInsuranceHandbookStatisticsContainer('health')">
+                                <div class="insurance-card-icon">🏥</div>
+                                <h3 class="insurance-card-title">Health</h3>
+                                <p class="insurance-card-desc">Health insurance handbook statistics.</p>
+                            </div>
+                            <div class="insurance-card" onclick="showInsuranceHandbookStatisticsContainer('reinsurance')">
+                                <div class="insurance-card-icon">🔁</div>
+                                <h3 class="insurance-card-title">Reinsurance</h3>
+                                <p class="insurance-card-desc">Reinsurance handbook statistics.</p>
+                            </div>
+                            <div class="insurance-card" onclick="showInsuranceHandbookStatisticsContainer('intermediaries')">
+                                <div class="insurance-card-icon">🤝</div>
+                                <h3 class="insurance-card-title">Intermediaries</h3>
+                                <p class="insurance-card-desc">Intermediaries handbook statistics.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="lifeContainer" class="insurance-view">
+                        <div class="insurance-section-header" style="margin-top:0.4rem;">
+                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHandbookStatisticsHome()">← Back to Handbook Modules</button>
+                        </div>
+                        <div class="insurance-data-card" style="margin-top:0.4rem;">
+                            <h3 class="insurance-card-title" style="margin-bottom:0.5rem;">Life</h3>
+                            <p class="insurance-data-muted">Life insurance handbook statistics module.</p>
+                        </div>
+                    </div>
+
+                    <div id="generalContainer" class="insurance-view">
+                        <div class="insurance-section-header" style="margin-top:0.4rem;">
+                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHandbookStatisticsHome()">← Back to Handbook Modules</button>
+                        </div>
+                        <div class="insurance-data-card" style="margin-top:0.4rem;">
+                            <h3 class="insurance-card-title" style="margin-bottom:0.5rem;">General</h3>
+                            <p class="insurance-data-muted">General insurance handbook statistics module.</p>
+                        </div>
+                    </div>
+
+                    <div id="healthContainer" class="insurance-view">
+                        <div class="insurance-section-header" style="margin-top:0.4rem;">
+                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHandbookStatisticsHome()">← Back to Handbook Modules</button>
+                        </div>
+                        <div class="insurance-data-card" style="margin-top:0.4rem;">
+                            <h3 class="insurance-card-title" style="margin-bottom:0.5rem;">Health</h3>
+                            <p class="insurance-data-muted">Health insurance handbook statistics module.</p>
+                        </div>
+                    </div>
+
+                    <div id="reinsuranceContainer" class="insurance-view">
+                        <div class="insurance-section-header" style="margin-top:0.4rem;">
+                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHandbookStatisticsHome()">← Back to Handbook Modules</button>
+                        </div>
+                        <div class="insurance-data-card" style="margin-top:0.4rem;">
+                            <h3 class="insurance-card-title" style="margin-bottom:0.5rem;">Reinsurance</h3>
+                            <p class="insurance-data-muted">Reinsurance handbook statistics module.</p>
+                        </div>
+                    </div>
+
+                    <div id="intermediariesContainer" class="insurance-view">
+                        <div class="insurance-section-header" style="margin-top:0.4rem;">
+                            <button class="submit-btn btn-muted btn-sm insurance-back-btn" onclick="showInsuranceHandbookStatisticsHome()">← Back to Handbook Modules</button>
+                        </div>
+                        <div class="insurance-data-card" style="margin-top:0.4rem;">
+                            <h3 class="insurance-card-title" style="margin-bottom:0.5rem;">Intermediaries</h3>
+                            <p class="insurance-data-muted">Intermediaries handbook statistics module.</p>
                         </div>
                     </div>
                 </div>
@@ -4781,6 +5040,30 @@ input:focus,textarea:focus,select:focus{
             }
         }
 
+        function showInsuranceHandbookStatisticsHome() {
+            const views = document.querySelectorAll('#insurancehandbookstatisticsContainer .insurance-view');
+            views.forEach(view => view.classList.remove('active'));
+            const homeView = document.getElementById('insurancehandbookstatisticsHomeView');
+            if (homeView) homeView.classList.add('active');
+        }
+
+        function showInsuranceHandbookStatisticsContainer(containerName) {
+            const containerMap = {
+                life: 'lifeContainer',
+                general: 'generalContainer',
+                health: 'healthContainer',
+                reinsurance: 'reinsuranceContainer',
+                intermediaries: 'intermediariesContainer'
+            };
+
+            const targetId = containerMap[containerName] || 'insurancehandbookstatisticsHomeView';
+            const views = document.querySelectorAll('#insurancehandbookstatisticsContainer .insurance-view');
+            views.forEach(view => view.classList.remove('active'));
+
+            const target = document.getElementById(targetId);
+            if (target) target.classList.add('active');
+        }
+
         function openInsuranceActsScreen() {
             insuranceActiveActId = null;
             const actsScreen = document.getElementById('insuranceActsScreen');
@@ -5453,8 +5736,7 @@ input:focus,textarea:focus,select:focus{
                 hideModulePlaceholder();
                 disableTennisTabs();
                 setTimeout(async () => {
-                    await initializeInsuranceModule();
-                    showInsuranceView('companies');
+                    showInsuranceHandbookStatisticsHome();
                 }, 80);
             } else {
                 // Show placeholder for other modules
@@ -5521,6 +5803,7 @@ input:focus,textarea:focus,select:focus{
             const moduleSection = document.getElementById('moduleHomeSection');
             const moduleNameEl = document.getElementById('moduleHomeName');
             const insuranceContainer = document.getElementById('insuranceContainer');
+            const insurancehandbookstatisticsContainer = document.getElementById('insurancehandbookstatisticsContainer');
             const genericPlaceholder = document.getElementById('genericModulePlaceholder');
             const insuranceCompaniesBackBtn = document.getElementById('insuranceCompaniesBackBtn');
 
@@ -5529,13 +5812,8 @@ input:focus,textarea:focus,select:focus{
             }
 
             if (insuranceCompaniesBackBtn) {
-                if (moduleName === 'Insurance Handbook Statistics') {
-                    insuranceCompaniesBackBtn.textContent = '← Back to Dashboard';
-                    insuranceCompaniesBackBtn.setAttribute('onclick', 'showDashboard()');
-                } else {
-                    insuranceCompaniesBackBtn.textContent = '← Back to Insurance Home';
-                    insuranceCompaniesBackBtn.setAttribute('onclick', 'showInsuranceHome()');
-                }
+                insuranceCompaniesBackBtn.textContent = '← Back to Insurance Home';
+                insuranceCompaniesBackBtn.setAttribute('onclick', 'showInsuranceHome()');
             }
             
             if (moduleName === 'Tennis') {
@@ -5543,27 +5821,38 @@ input:focus,textarea:focus,select:focus{
                 if (tennisSection) tennisSection.style.display = 'block';
                 if (moduleSection) moduleSection.style.display = 'none';
                 if (insuranceContainer) insuranceContainer.style.display = 'none';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'none';
                 if (genericPlaceholder) genericPlaceholder.style.display = 'none';
             } else if (moduleName === 'Actuaries') {
                 if (tennisSection) tennisSection.style.display = 'none';
                 if (moduleSection) moduleSection.style.display = 'none';
                 if (insuranceContainer) insuranceContainer.style.display = 'none';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'none';
                 if (genericPlaceholder) genericPlaceholder.style.display = 'none';
             } else if (moduleName === 'Mobility - Physio') {
                 if (tennisSection) tennisSection.style.display = 'none';
                 if (moduleSection) moduleSection.style.display = 'none';
                 if (insuranceContainer) insuranceContainer.style.display = 'none';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'none';
                 if (genericPlaceholder) genericPlaceholder.style.display = 'none';
-            } else if (moduleName === 'Insurance' || moduleName === 'Insurance Handbook Statistics') {
+            } else if (moduleName === 'Insurance') {
                 if (tennisSection) tennisSection.style.display = 'none';
                 if (moduleSection) moduleSection.style.display = 'block';
                 if (insuranceContainer) insuranceContainer.style.display = 'block';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'none';
+                if (genericPlaceholder) genericPlaceholder.style.display = 'none';
+            } else if (moduleName === 'Insurance Handbook Statistics') {
+                if (tennisSection) tennisSection.style.display = 'none';
+                if (moduleSection) moduleSection.style.display = 'block';
+                if (insuranceContainer) insuranceContainer.style.display = 'none';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'block';
                 if (genericPlaceholder) genericPlaceholder.style.display = 'none';
             } else {
                 // Hide Tennis content, show generic module content
                 if (tennisSection) tennisSection.style.display = 'none';
                 if (moduleSection) moduleSection.style.display = 'block';
                 if (insuranceContainer) insuranceContainer.style.display = 'none';
+                if (insurancehandbookstatisticsContainer) insurancehandbookstatisticsContainer.style.display = 'none';
                 if (genericPlaceholder) genericPlaceholder.style.display = 'block';
                 // Update module name with proper formatting
                 if (moduleNameEl) {
