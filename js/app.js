@@ -3513,6 +3513,11 @@ const mobileBottomNavConfig = {
             if (!email) { alert('Please enter email'); return; }
             if (!password) { alert('Please enter password'); return; }
 
+            if (typeof window.firebaseSignIn !== 'function') {
+                alert('App is still initializing. Please wait 2-3 seconds and try again.');
+                return;
+            }
+
             window.firebaseSignIn(email, password);
         }
 
@@ -3864,6 +3869,20 @@ const mobileBottomNavConfig = {
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
+
+    // =============================
+    // FIREBASE APP CHECK (SECURITY)
+    // =============================
+    try {
+        const { initializeAppCheck, ReCaptchaV3Provider } = await import("https://www.gstatic.com/firebasejs/12.9.0/firebase-app-check.js");
+        const appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider("6LfDi3ksAAAAABSUcIYO4zKLyxZRWRHVZQB28EvB"),
+            isTokenAutoRefreshEnabled: true
+        });
+        window.firebaseAppCheck = appCheck;
+    } catch (appCheckError) {
+        console.warn("Firebase App Check init failed. Continuing without blocking login.", appCheckError);
+    }
 
   // Initialize Firestore
   const db = getFirestore(app);
